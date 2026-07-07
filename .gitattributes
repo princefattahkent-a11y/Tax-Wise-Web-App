@@ -1,0 +1,67 @@
+# ─── TaxWise .gitattributes ───────────────────────────────────────────────────
+# Normalize line endings in the repository to LF.
+# Git will store LF in the repo and convert to CRLF on Windows checkouts
+# only for files explicitly marked eol=crlf below.
+# This eliminates all "LF will be replaced by CRLF" warnings permanently.
+
+# Default: auto-detect text files and normalize to LF in the repo
+* text=auto eol=lf
+
+# ── Source code ──────────────────────────────────────────────────────────────
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+
+# ── Styles & markup ──────────────────────────────────────────────────────────
+*.css       text eol=lf
+*.scss      text eol=lf
+*.html      text eol=lf
+*.svg       text eol=lf
+
+# ── Config & data ────────────────────────────────────────────────────────────
+*.json      text eol=lf
+*.jsonc     text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.toml      text eol=lf
+*.env       text eol=lf
+*.env.*     text eol=lf
+
+# ── Docs ─────────────────────────────────────────────────────────────────────
+*.md        text eol=lf
+*.txt       text eol=lf
+*.sql       text eol=lf
+
+# ── Shell scripts (must be LF) ───────────────────────────────────────────────
+*.sh        text eol=lf
+*.bash      text eol=lf
+
+# ── Windows scripts (keep CRLF) ──────────────────────────────────────────────
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# ── Docker ───────────────────────────────────────────────────────────────────
+Dockerfile  text eol=lf
+*.dockerfile text eol=lf
+
+# ── Binary files — never touch line endings ───────────────────────────────────
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.webp      binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.otf       binary
+*.eot       binary
+*.pdf       binary
+*.zip       binary
+*.gz        binary
+*.tar       binary
+*.7z        binary

@@ -1,0 +1,6 @@
+{
+  "name": "TaxWise Uganda",
+  "description": "An AI-powered tax intelligence and SaaS platform for tax professionals, accountants, lawyers, and students in Uganda.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
