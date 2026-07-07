@@ -6,6 +6,7 @@ import { C } from "../lib/constants";
 import { Card } from "./UI";
 import { supabase } from "../lib/supabaseClient";
 import { CorporateTaxCalculator } from "./CorporateTaxCalculator";
+import { PayeCalculator } from "./PayeCalculator";
 
 interface CalculatorTab {
   id: string;
@@ -22,10 +23,10 @@ interface CalculatorTab {
 const calculatorTabs: CalculatorTab[] = [
   {
     id: "paye",
-    title: "PAYE Estimator",
-    description: "Quick estimate for monthly employee PAYE from gross salary.",
+    title: "PAYE Calculator",
+    description: "Full monthly PAYE calculator under the Income Tax (Amendment) Act 2026.",
     accent: C.teal,
-    helper: "Useful when preparing payroll or explaining gross-to-net impact.",
+    helper: "Estimate payroll taxes, NSSF, allowances, and cash take-home pay.",
     inputLabel: "Gross monthly pay (UGX)",
     inputValue: 2500000,
     inputMin: 0,
@@ -254,6 +255,19 @@ export const CalculatorsPortal: React.FC = () => {
                   </div>
                 </div>
                 <CorporateTaxCalculator />
+              </div>
+            </Card>
+          ) : activeTab === "paye" ? (
+            <Card style={{ padding: 28 }} hover>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap", borderBottom: `1px solid ${C.border}`, paddingBottom: 16 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: activeCalculator.accent, marginTop: 6 }} />
+                  <div>
+                    <div style={{ fontSize: "1.15rem", fontWeight: 800, color: C.navy }}>{activeCalculator.title}</div>
+                    <div style={{ color: C.muted, fontSize: "0.95rem", marginTop: 4 }}>{activeCalculator.description}</div>
+                  </div>
+                </div>
+                <PayeCalculator />
               </div>
             </Card>
           ) : (
