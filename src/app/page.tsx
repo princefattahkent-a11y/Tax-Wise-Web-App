@@ -252,6 +252,8 @@ export default function TaxWiseSaaS() {
         onGetStarted={() => setView("auth")}
         onSignIn={() => setView("auth")}
         onNavigate={handleNavigation}
+        dbUser={dbUser}
+        onSignOut={handleSignOut}
       />
     );
   }

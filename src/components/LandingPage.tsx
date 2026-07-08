@@ -35,6 +35,14 @@ interface LandingPageProps {
   onGetStarted: () => void;
   onSignIn: () => void;
   onNavigate?: (page: string) => void;
+  dbUser?: {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string;
+    plan: string;
+  } | null;
+  onSignOut?: () => void;
 }
 
 const itemToPageMap: Record<string, string> = {
@@ -53,7 +61,7 @@ const itemToPageMap: Record<string, string> = {
   "Monthly Tax Updates": "intelligence",
 };
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn, onNavigate }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn, onNavigate, dbUser, onSignOut }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [heroText, setHeroText] = useState("");
   const [showResult, setShowResult] = useState(false);
@@ -261,8 +269,69 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
 
           {/* Nav Actions */}
           <div className="tw-nav-desktop" style={{ display: "flex", alignItems: "center", gap: 18, marginLeft: "auto" }}>
-            <button onClick={onSignIn} className="tw-nav-link" style={{ color: "rgba(255,255,255,.7)", fontSize: ".85rem", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", transition: "color .2s" }}>Sign In</button>
-            <button onClick={onGetStarted} className="tw-btn-hover" style={{ background: "linear-gradient(135deg, #1A7B6B 0%, #155f52 100%)", color: "white", padding: "9px 20px", borderRadius: 8, fontSize: ".85rem", fontWeight: 700, border: "none", cursor: "pointer", transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)", whiteSpace: "nowrap", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(26,123,107,0.2)" }}>Start Free Trial</button>
+            {dbUser ? (
+              <div className="tw-dd" style={{ position: "relative" }}>
+                <button
+                  onClick={() => {
+                    if (onNavigate) {
+                      onNavigate("dashboard");
+                    } else {
+                      onGetStarted();
+                    }
+                  }}
+                  className="tw-btn-hover"
+                  style={{
+                    background: "linear-gradient(135deg, #1A7B6B 0%, #155f52 100%)",
+                    color: "white",
+                    padding: "9px 20px",
+                    borderRadius: 8,
+                    fontSize: ".85rem",
+                    fontWeight: 700,
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)",
+                    whiteSpace: "nowrap",
+                    fontFamily: "inherit",
+                    boxShadow: "0 4px 12px rgba(26,123,107,0.2)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  <span>Dashboard</span>
+                  <span style={{ fontSize: ".55rem", opacity: .8 }}>▼</span>
+                </button>
+                <div className="tw-dropdown" style={{ position: "absolute", top: "100%", right: 0, background: "white", borderRadius: "8px", boxShadow: "0 20px 48px rgba(15,32,68,.16)", minWidth: 160, zIndex: 400, borderTop: "3px solid #1A7B6B", padding: "6px" }}>
+                  <div style={{ padding: "6px 12px", fontSize: "0.72rem", color: "#6B7280", borderBottom: "1px solid rgba(0,0,0,0.06)", marginBottom: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    Signed in as <br/><strong>{dbUser.full_name}</strong>
+                  </div>
+                  <button onClick={() => {
+                    if (onNavigate) onNavigate("dashboard");
+                  }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, width: "100%", border: "none", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: ".8rem", fontWeight: 600, color: "#1C1C1E", transition: "background .15s" }}
+                    onMouseOver={e => (e.currentTarget.style.background = "#F8F7F4")}
+                    onMouseOut={e => (e.currentTarget.style.background = "none")}>
+                    📊 Go to Dashboard
+                  </button>
+                  <button onClick={() => {
+                    if (onNavigate) onNavigate("settings");
+                  }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, width: "100%", border: "none", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: ".8rem", fontWeight: 600, color: "#1C1C1E", transition: "background .15s" }}
+                    onMouseOver={e => (e.currentTarget.style.background = "#F8F7F4")}
+                    onMouseOut={e => (e.currentTarget.style.background = "none")}>
+                    ⚙️ Settings
+                  </button>
+                  <button onClick={onSignOut} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, width: "100%", border: "none", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: ".8rem", fontWeight: 600, color: "#DC2626", transition: "background .15s" }}
+                    onMouseOver={e => (e.currentTarget.style.background = "#FEF2F2")}
+                    onMouseOut={e => (e.currentTarget.style.background = "none")}>
+                    🚪 Sign Out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button onClick={onSignIn} className="tw-nav-link" style={{ color: "rgba(255,255,255,.7)", fontSize: ".85rem", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", transition: "color .2s" }}>Sign In</button>
+                <button onClick={onGetStarted} className="tw-btn-hover" style={{ background: "linear-gradient(135deg, #1A7B6B 0%, #155f52 100%)", color: "white", padding: "9px 20px", borderRadius: 8, fontSize: ".85rem", fontWeight: 700, border: "none", cursor: "pointer", transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)", whiteSpace: "nowrap", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(26,123,107,0.2)" }}>Start Free Trial</button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Icon */}
@@ -274,6 +343,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
         {/* Mobile Navigation Dropdown */}
         {mobileOpen && (
           <div style={{ background: "#0C1B36", borderTop: "1px solid rgba(255,255,255,.08)", padding: "16px 5%", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+            {dbUser && (
+              <div style={{ padding: "8px 0 16px", borderBottom: "1px solid rgba(255,255,255,.08)", marginBottom: "8px" }}>
+                <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)" }}>Signed in as</span>
+                <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "white" }}>{dbUser.full_name}</div>
+              </div>
+            )}
             {["Case Analyzer", "Tax Calculators", "Customs & Import", "Intelligence Hub", "Compliance Checklists", "Pricing Plan"].map(link => {
               const pageId = link === "Tax Calculators" ? "calculators" : 
                              link === "Case Analyzer" ? "analyzer" :
@@ -292,7 +367,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                 }} className="tw-mobile-link" style={{ display: "block", padding: "12px 0", color: "rgba(255,255,255,.7)", background: "none", border: "none", fontSize: ".9rem", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,.06)", width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", transition: "color .2s" }}>{link}</button>
               );
             })}
-            <button onClick={() => { setMobileOpen(false); onGetStarted(); }} style={{ display: "block", padding: "12px 0", color: "#4DD9C0", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>→ Start Free Trial</button>
+            {dbUser ? (
+              <>
+                <button onClick={() => { setMobileOpen(false); if (onNavigate) onNavigate("dashboard"); else onGetStarted(); }} style={{ display: "block", padding: "12px 0", color: "#4DD9C0", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>📊 Go to Dashboard</button>
+                <button onClick={() => { setMobileOpen(false); if (onSignOut) onSignOut(); }} style={{ display: "block", padding: "12px 0", color: "#FCA5A5", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 4 }}>🚪 Sign Out</button>
+              </>
+            ) : (
+              <button onClick={() => { setMobileOpen(false); onGetStarted(); }} style={{ display: "block", padding: "12px 0", color: "#4DD9C0", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>→ Start Free Trial</button>
+            )}
           </div>
         )}
       </div>
@@ -321,9 +403,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             </p>
             
             <div className="tw-hero-ctas" style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 40 }}>
-              <button onClick={onGetStarted} className="tw-btn-hover" style={{ background: "linear-gradient(135deg, #1A7B6B 0%, #155f52 100%)", color: "white", padding: "14px 28px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "none", cursor: "pointer", transition: "all .25s cubic-bezier(0.16, 1, 0.3, 1)", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 4px 14px rgba(26,123,107,0.35)" }}>
-                Start 14-Day Free Trial →
-              </button>
+              {dbUser ? (
+                <button onClick={() => { if (onNavigate) onNavigate("dashboard"); else onGetStarted(); }} className="tw-btn-hover" style={{ background: "linear-gradient(135deg, #1A7B6B 0%, #155f52 100%)", color: "white", padding: "14px 28px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "none", cursor: "pointer", transition: "all .25s cubic-bezier(0.16, 1, 0.3, 1)", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 4px 14px rgba(26,123,107,0.35)" }}>
+                  Go to Dashboard →
+                </button>
+              ) : (
+                <button onClick={onGetStarted} className="tw-btn-hover" style={{ background: "linear-gradient(135deg, #1A7B6B 0%, #155f52 100%)", color: "white", padding: "14px 28px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "none", cursor: "pointer", transition: "all .25s cubic-bezier(0.16, 1, 0.3, 1)", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 4px 14px rgba(26,123,107,0.35)" }}>
+                  Start 14-Day Free Trial →
+                </button>
+              )}
               <button onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })} style={{ background: "rgba(255,255,255,0.04)", color: "white", padding: "14px 28px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "1px solid rgba(255,255,255,.2)", cursor: "pointer", transition: "all .25s cubic-bezier(0.16, 1, 0.3, 1)", fontFamily: "inherit" }}
                 onMouseOver={e => (e.currentTarget.style.background = "rgba(255,255,255,.08)")}
                 onMouseOut={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}>
@@ -591,12 +679,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "clamp(1.8rem, 3.2vw, 2.6rem)", color: "white", marginBottom: 18, fontWeight: 700 }}>Ready to upgrade your practice?</h2>
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "1rem", lineHeight: 1.7, marginBottom: 36, fontWeight: 500 }}>Join leading tax firms and corporate finance departments saving hours every week. Try our full suite free.</p>
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <button onClick={onGetStarted} className="tw-btn-hover" style={{ background: "white", color: "#1A7B6B", padding: "14px 30px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "none", cursor: "pointer", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>Create Free Account →</button>
-            <button onClick={onSignIn} style={{ background: "transparent", color: "white", padding: "14px 30px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "1px solid rgba(255,255,255,.4)", cursor: "pointer", fontFamily: "inherit" }}
-              onMouseOver={e => (e.currentTarget.style.background = "rgba(255,255,255,.08)")}
-              onMouseOut={e => (e.currentTarget.style.background = "transparent")}>
-              Sign In
-            </button>
+            {dbUser ? (
+              <button onClick={() => { if (onNavigate) onNavigate("dashboard"); else onGetStarted(); }} className="tw-btn-hover" style={{ background: "white", color: "#1A7B6B", padding: "14px 30px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "none", cursor: "pointer", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                Go to Dashboard →
+              </button>
+            ) : (
+              <>
+                <button onClick={onGetStarted} className="tw-btn-hover" style={{ background: "white", color: "#1A7B6B", padding: "14px 30px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "none", cursor: "pointer", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>Create Free Account →</button>
+                <button onClick={onSignIn} style={{ background: "transparent", color: "white", padding: "14px 30px", borderRadius: 8, fontWeight: 700, fontSize: ".925rem", border: "1px solid rgba(255,255,255,.4)", cursor: "pointer", fontFamily: "inherit" }}
+                  onMouseOver={e => (e.currentTarget.style.background = "rgba(255,255,255,.08)")}
+                  onMouseOut={e => (e.currentTarget.style.background = "transparent")}>
+                  Sign In
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>
