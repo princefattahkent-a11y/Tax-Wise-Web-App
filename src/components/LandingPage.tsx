@@ -2,7 +2,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { LayoutDashboard, Settings, LogOut, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Settings, LogOut, ChevronDown, Scale, Search, Car, Calculator, GraduationCap, ShieldCheck, Mail, Check, Star, FileText, Cpu, TrendingUp, Clock, Building2, Globe } from "lucide-react";
 
 interface SiteSettings {
   stat_cases: string;
@@ -28,7 +28,7 @@ const DEFAULTS: SiteSettings = {
   hero_title_line2: "platform your practice",
   hero_title_line3: "actually needs",
   hero_subtitle: "AI case analysis, TAT precedent research, live tax & import calculators, and compliance checking tools — purpose-built for Uganda's tax ecosystem.",
-  topbar_text: "🇺🇬 Engineered for Uganda's Tax & Customs Ecosystem",
+  topbar_text: "Engineered for Uganda's Tax & Customs Ecosystem",
   topbar_email: "hello@taxwise.cloud",
 };
 
@@ -126,12 +126,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
   };
 
   const features = [
-    { icon: "⚖️", title: "AI Case Analyzer", desc: "Upload a PDF or paste any TAT ruling. Get a structured summary, risk assessment, applicable law references, and practical steps in under 30 seconds." },
-    { icon: "🔍", title: "TAT Case Library", desc: "Uganda's most comprehensive TAT ruling database. Filter by type, year, or outcome. Get instant AI commentary on precedents." },
-    { icon: "🚗", title: "Vehicle Import Calculator", desc: "URA import duty breakdowns for motor vehicles. Computes import duty, VAT, WHT, infrastructure levy, and age depreciation." },
-    { icon: "🧮", title: "Comprehensive Tax Calculators", desc: "PAYE, VAT, Corporate Income Tax, WHT, and General Import Duty. Live, accurate calculations based on current Uganda rates." },
-    { icon: "🎓", title: "Professional Intelligence", desc: "Advanced learning hub covering transfer pricing, TAT appeal strategies, cross-border WHT, and URA audit defence (ICPAU CPD-eligible)." },
-    { icon: "✅", title: "Compliance Engine", desc: "Structured checklists for eFRIS, VAT, and PAYE. Generates risk reports detailing potential exposure to URA penalties." },
+    { icon: <Scale size={20} style={{ color: "#1A7B6B" }} />, title: "AI Case Analyzer", desc: "Upload a PDF or paste any TAT ruling. Get a structured summary, risk assessment, applicable law references, and practical steps in under 30 seconds." },
+    { icon: <Search size={20} style={{ color: "#1A7B6B" }} />, title: "TAT Case Library", desc: "Uganda's most comprehensive TAT ruling database. Filter by type, year, or outcome. Get instant AI commentary on precedents." },
+    { icon: <Car size={20} style={{ color: "#1A7B6B" }} />, title: "Vehicle Import Calculator", desc: "URA import duty breakdowns for motor vehicles. Computes import duty, VAT, WHT, infrastructure levy, and age depreciation." },
+    { icon: <Calculator size={20} style={{ color: "#1A7B6B" }} />, title: "Comprehensive Tax Calculators", desc: "PAYE, VAT, Corporate Income Tax, WHT, and General Import Duty. Live, accurate calculations based on current Uganda rates." },
+    { icon: <GraduationCap size={20} style={{ color: "#1A7B6B" }} />, title: "Professional Intelligence", desc: "Advanced learning hub covering transfer pricing, TAT appeal strategies, cross-border WHT, and URA audit defence (ICPAU CPD-eligible)." },
+    { icon: <ShieldCheck size={20} style={{ color: "#1A7B6B" }} />, title: "Compliance Engine", desc: "Structured checklists for eFRIS, VAT, and PAYE. Generates risk reports detailing potential exposure to URA penalties." },
   ];
 
   const testimonials = [
@@ -318,9 +318,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
 
       {/* TOP BAR */}
       <div style={{ background: "#0D7C68", padding: "8px 5%", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: ".72rem", color: "rgba(255,255,255,.9)", fontWeight: 500, letterSpacing: "0.02em" }}>
-        <span>{settings.topbar_text}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Globe size={13} style={{ color: "rgba(255,255,255,.95)" }} />
+          {settings.topbar_text}
+        </span>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>📧 {settings.topbar_email}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <Mail size={13} style={{ color: "rgba(255,255,255,.95)" }} />
+            {settings.topbar_email}
+          </span>
           <button onClick={onGetStarted} style={{ color: "white", background: "none", border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: ".72rem", textDecoration: "underline" }}>Start Free Trial →</button>
         </div>
       </div>
@@ -636,7 +642,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           <div className="tw-feat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
             {features.map(f => (
               <div key={f.title} className="tw-feat-card" style={{ border: "1px solid rgba(15, 32, 68, 0.08)", borderRadius: 16, padding: 28, background: "white", cursor: "pointer", boxShadow: "0 4px 20px rgba(15, 32, 68, 0.02)" }} onClick={onGetStarted}>
-                <div style={{ width: 44, height: 44, background: "#E6F5F2", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", marginBottom: 18, boxShadow: "0 2px 8px rgba(26,123,107,0.06)" }}>{f.icon}</div>
+                <div style={{ width: 44, height: 44, background: "#E6F5F2", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18, boxShadow: "0 2px 8px rgba(26,123,107,0.06)" }}>{f.icon}</div>
                 <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#0F2044", marginBottom: 10 }}>{f.title}</h3>
                 <p style={{ fontSize: ".84rem", color: "#6B7280", lineHeight: 1.6 }}>{f.desc}</p>
               </div>
@@ -655,13 +661,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 40 }}>
             {[
-              { step: "01", icon: "📄", title: "Upload or paste your case", desc: "Upload a TAT ruling PDF, paste a URA assessment, or describe your scenario. We accept all text structures." },
-              { step: "02", icon: "🤖", title: "AI analyzes in 30 seconds", desc: "The engine references Uganda tax acts, TAT precedents, and URA practice notes to deliver an interactive report." },
-              { step: "03", icon: "📈", title: "Act on structured findings", desc: "Download a clean report detailing risk level, precedents, applicable rules, and next steps. Ready for clients." },
+              { step: "01", icon: <FileText size={26} style={{ color: "#1A7B6B" }} />, title: "Upload or paste your case", desc: "Upload a TAT ruling PDF, paste a URA assessment, or describe your scenario. We accept all text structures." },
+              { step: "02", icon: <Cpu size={26} style={{ color: "#1A7B6B" }} />, title: "AI analyzes in 30 seconds", desc: "The engine references Uganda tax acts, TAT precedents, and URA practice notes to deliver an interactive report." },
+              { step: "03", icon: <TrendingUp size={26} style={{ color: "#1A7B6B" }} />, title: "Act on structured findings", desc: "Download a clean report detailing risk level, precedents, applicable rules, and next steps. Ready for clients." },
             ].map(s => (
               <div key={s.step} style={{ position: "relative" }}>
                 <div style={{ fontSize: "3.2rem", fontFamily: "'Playfair Display', Georgia, serif", color: "#B6E5DC", fontWeight: 800, lineHeight: 1, marginBottom: 14 }}>{s.step}</div>
-                <div style={{ fontSize: "1.6rem", marginBottom: 14 }}>{s.icon}</div>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>{s.icon}</div>
                 <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0F2044", marginBottom: 10 }}>{s.title}</h3>
                 <p style={{ fontSize: ".875rem", color: "#6B7280", lineHeight: 1.65 }}>{s.desc}</p>
               </div>
@@ -682,7 +688,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             {testimonials.map(t => (
               <div key={t.name} className="tw-testi" style={{ background: "white", border: "1px solid rgba(15, 32, 68, 0.08)", borderRadius: 16, padding: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 16px rgba(15, 32, 68, 0.01)" }}>
                 <div>
-                  <div style={{ color: "#C8922A", fontSize: ".8rem", marginBottom: 16, letterSpacing: 2 }}>★★★★★</div>
+                  <div style={{ display: "flex", gap: 3, marginBottom: 16 }}>
+                    {[...Array(5)].map((_, idx) => (
+                      <Star key={idx} size={14} style={{ fill: "#C8922A", color: "#C8922A" }} />
+                    ))}
+                  </div>
                   <blockquote style={{ fontSize: ".875rem", color: "#1C1C1E", lineHeight: 1.7, marginBottom: 24, fontStyle: "italic", fontWeight: 400 }}>&ldquo;{t.quote}&rdquo;</blockquote>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -744,12 +754,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "1.5rem",
-                          fontWeight: 800,
                           marginBottom: 16,
                         }}
                       >
-                        ⏰
+                        <Clock size={24} style={{ color: "#C8922A" }} />
                       </div>
                       <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.6rem", fontWeight: 700, color: "white", marginBottom: 8 }}>
                         Coming Soon
@@ -776,7 +784,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                     <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
                       {plan.features.map(f => (
                         <li key={f} style={{ fontSize: ".85rem", color: "rgba(255,255,255,.85)", display: "flex", gap: 8, alignItems: "flex-start", lineHeight: 1.4, fontWeight: 500 }}>
-                          <span style={{ color: plan.popular ? "#FFE08A" : "#C8922A", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✓</span>{f}
+                          <span style={{ color: plan.popular ? "#FFE08A" : "#C8922A", flexShrink: 0, marginTop: 3 }}>
+                            <Check size={14} />
+                          </span>
+                          {f}
                         </li>
                       ))}
                     </ul>
@@ -842,7 +853,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             <div>
               <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.45rem", color: "white", marginBottom: 12, fontWeight: 800 }}>Tax<span style={{ color: "#4DD9C0" }}>Wise</span></div>
               <p style={{ fontSize: ".8rem", color: "rgba(255,255,255,.45)", lineHeight: 1.6, maxWidth: 220, marginBottom: 16 }}>Uganda&apos;s professional tax intelligence engine. Designed for tax consultants, accountants, and customs brokers.</p>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", padding: "5px 12px", borderRadius: 50, fontSize: ".68rem", color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>🏛️ ICPAU CPD-Eligible</div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", padding: "5px 12px", borderRadius: 50, fontSize: ".68rem", color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>
+                <Building2 size={13} style={{ color: "rgba(255,255,255,0.75)" }} />
+                <span>ICPAU CPD-Eligible</span>
+              </div>
             </div>
             {[
               { heading: "Products", links: ["Case Analyzer", "Compliance Check", "TAT Precedents", "Client Reports"] },

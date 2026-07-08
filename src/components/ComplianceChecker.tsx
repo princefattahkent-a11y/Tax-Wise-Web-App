@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { supabase } from "../lib/supabaseClient";
 import { COMPLIANCE_ITEMS, C, riskColors } from "../lib/constants";
 import { Badge, Button, Card, ProgressBar } from "./UI";
+import { Check, AlertTriangle, Sparkles, FolderOpen } from "lucide-react";
 
 interface ComplianceCheckerProps {
   user: {
@@ -228,7 +229,7 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                         transition: "all 0.15s ease"
                       }}
                     >
-                      {isChecked ? "✓" : ""}
+                      {isChecked ? <Check size={12} strokeWidth={3} /> : ""}
                     </div>
                     <span
                       style={{
@@ -289,8 +290,9 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                   animation: "pulseBorder 2.5s infinite"
                 }}
               >
-                <div style={{ fontSize: "0.75rem", fontWeight: 800, color: C.red, marginBottom: 8, letterSpacing: "0.02em" }}>
-                  ⚠ {highRisks.length} HIGH-RISK VULNERABILITIES OUTSTANDING
+                <div style={{ fontSize: "0.75rem", fontWeight: 800, color: C.red, marginBottom: 8, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 6 }}>
+                  <AlertTriangle size={14} />
+                  <span>{highRisks.length} HIGH-RISK VULNERABILITIES OUTSTANDING</span>
                 </div>
                 {highRisks.slice(0, 2).map((h) => (
                   <div key={h.id} style={{ fontSize: "0.76rem", color: C.red, marginBottom: 4, display: "flex", gap: 5 }}>
@@ -303,7 +305,10 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
           </Card>
 
           <Card style={{ padding: 24 }}>
-            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 8, fontSize: "0.95rem" }}>✦ AI Compliance Audit</div>
+            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 8, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
+              <Sparkles size={16} style={{ color: C.gold }} />
+              <span>AI Compliance Audit</span>
+            </div>
             <p style={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.6, marginBottom: 16, fontWeight: 500 }}>
               Generates a detailed regulatory report outlining specific legal exposure and applicable penalties under the Tax Procedures Code Act.
             </p>
@@ -335,7 +340,10 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
 
           {pastReports.length > 0 && (
             <Card style={{ padding: 24 }}>
-              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 14, fontSize: "0.95rem" }}>📁 Historic Audits</div>
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 14, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
+                <FolderOpen size={16} style={{ color: C.teal }} />
+                <span>Historic Audits</span>
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 180, overflowY: "auto" }}>
                 {pastReports.map((report) => (
                   <div

@@ -3,6 +3,20 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { User } from "@supabase/supabase-js";
+import { 
+  LayoutDashboard, 
+  Scale, 
+  BookOpen, 
+  Calculator, 
+  Brain, 
+  GraduationCap, 
+  CheckCircle, 
+  CreditCard, 
+  Shield, 
+  LogOut, 
+  Home, 
+  Bell 
+} from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
 import { AuthPage } from "../components/AuthPage";
@@ -141,19 +155,19 @@ export default function TaxWiseSaaS() {
   };
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: "⊞" },
-    { id: "analyzer", label: "Case Analyzer", icon: "⚖️" },
-    { id: "library", label: "Case Library", icon: "📚" },
-    { id: "calculators", label: "Calculators", icon: "🧮" },
-    { id: "intelligence", label: "Intelligence", icon: "🧠" },
-    { id: "education", label: "Learning Hub", icon: "🎓" },
-    { id: "compliance", label: "Compliance", icon: "✅" },
-    { id: "pricing", label: "Pricing", icon: "💳" },
+    { id: "dashboard", label: "Dashboard" },
+    { id: "analyzer", label: "Case Analyzer" },
+    { id: "library", label: "Case Library" },
+    { id: "calculators", label: "Calculators" },
+    { id: "intelligence", label: "Intelligence" },
+    { id: "education", label: "Learning Hub" },
+    { id: "compliance", label: "Compliance" },
+    { id: "pricing", label: "Pricing" },
   ];
 
   // Include Admin navigation if the user is an Admin
   if (dbUser?.role?.toLowerCase() === "admin") {
-    navItems.push({ id: "admin", label: "Admin Portal", icon: "🛡️" });
+    navItems.push({ id: "admin", label: "Admin Portal" });
   }
 
   const renderActivePage = () => {
@@ -263,8 +277,23 @@ export default function TaxWiseSaaS() {
     return <AuthPage onLoginSuccess={refreshUser} onBack={() => setView("landing")} />;
   }
 
+  const getNavItemIcon = (id: string, size = 18) => {
+    switch (id) {
+      case "dashboard": return <LayoutDashboard size={size} />;
+      case "analyzer": return <Scale size={size} />;
+      case "library": return <BookOpen size={size} />;
+      case "calculators": return <Calculator size={size} />;
+      case "intelligence": return <Brain size={size} />;
+      case "education": return <GraduationCap size={size} />;
+      case "compliance": return <CheckCircle size={size} />;
+      case "pricing": return <CreditCard size={size} />;
+      case "admin": return <Shield size={size} />;
+      default: return <LayoutDashboard size={size} />;
+    }
+  };
+
   // Sidebar Nav Item Helper Component for hover states
-  const SidebarNavItem = ({ item, isActive, onClick }: { item: { id: string; label: string; icon: string }; isActive: boolean; onClick: () => void }) => {
+  const SidebarNavItem = ({ item, isActive, onClick }: { item: { id: string; label: string }; isActive: boolean; onClick: () => void }) => {
     return (
       <motion.button
         onClick={onClick}
@@ -304,8 +333,8 @@ export default function TaxWiseSaaS() {
           }
         }}
       >
-        <span style={{ fontSize: "1.1rem", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-          {item.icon}
+        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+          {getNavItemIcon(item.id, 16)}
         </span>
         <span>{item.label}</span>
       </motion.button>
@@ -447,7 +476,8 @@ export default function TaxWiseSaaS() {
               e.currentTarget.style.color = C.white;
             }}
           >
-            <span style={{ fontSize: "1rem" }}>🚪</span> Sign Out
+            <LogOut size={15} />
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
@@ -488,8 +518,8 @@ export default function TaxWiseSaaS() {
               onMouseEnter={(e) => { e.currentTarget.style.background = C.offwhite; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
-              <span style={{ fontSize: "1rem" }}>🏠</span>
-              Home
+              <Home size={13} />
+              <span>Home</span>
             </button>
             <span>TaxWise</span>
             <span style={{ fontSize: "0.6rem" }}>/</span>
@@ -498,9 +528,9 @@ export default function TaxWiseSaaS() {
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <span style={{ fontSize: "0.82rem", color: C.muted, fontWeight: 500 }}>📅 {formattedDate}</span>
             <div style={{ width: 1, height: 20, background: C.border }} />
-            <div style={{ position: "relative" }}>
-              <span style={{ cursor: "pointer", fontSize: "1.2rem", color: C.navy }} title="Notifications">🔔</span>
-              <span style={{ position: "absolute", top: -2, right: -2, width: 7, height: 7, borderRadius: "50%", background: C.red }} />
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }} title="Notifications">
+              <Bell size={16} style={{ cursor: "pointer", color: C.navy }} />
+              <span style={{ position: "absolute", top: -2, right: -2, width: 6, height: 6, borderRadius: "50%", background: C.red }} />
             </div>
           </div>
         </header>

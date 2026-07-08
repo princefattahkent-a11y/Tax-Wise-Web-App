@@ -3,6 +3,17 @@ import { motion } from "motion/react";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
 import { Card } from "./UI";
+import { Scale, FileText, GraduationCap, ShieldCheck, Calculator, Brain, BookOpen, Search, FolderOpen, Sparkles } from "lucide-react";
+
+const getIconComponent = (iconName: string, size = 18, color?: string) => {
+  switch (iconName) {
+    case "scale": return <Scale size={size} style={{ color }} />;
+    case "file-text": return <FileText size={size} style={{ color }} />;
+    case "graduation-cap": return <GraduationCap size={size} style={{ color }} />;
+    case "shield-check": return <ShieldCheck size={size} style={{ color }} />;
+    default: return null;
+  }
+};
 
 interface DashboardProps {
   user: {
@@ -75,7 +86,7 @@ const Sparkline = ({ type, color }: { type: string; color: string }) => {
 };
 
 // Quick Action Button Wrapper for premium interactions
-const QuickActionButton = ({ action, onClick }: { action: { label: string }; onClick: () => void }) => {
+const QuickActionButton = ({ action, onClick }: { action: { label: string; icon: React.ReactNode }; onClick: () => void }) => {
   const [hovered, setHovered] = useState(false);
   return (
     <motion.button
@@ -103,7 +114,10 @@ const QuickActionButton = ({ action, onClick }: { action: { label: string }; onC
         width: "100%",
       }}
     >
-      <span>{action.label}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {action.icon}
+        <span>{action.label}</span>
+      </div>
       <motion.span 
         animate={{ x: hovered ? 4 : 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 15 }}
@@ -127,10 +141,10 @@ const getSparklineType = (label: string): string => {
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
   const [stats, setStats] = useState([
-    { label: "Cases Analyzed", value: "0", icon: "⚖️", color: C.teal },
-    { label: "Reports Generated", value: "0", icon: "📄", color: C.navy },
-    { label: "Lessons Completed", value: "0", icon: "🎓", color: C.gold },
-    { label: "Compliance Score", value: "--%", icon: "✅", color: C.green },
+    { label: "Cases Analyzed", value: "0", icon: "scale", color: C.teal },
+    { label: "Reports Generated", value: "0", icon: "file-text", color: C.navy },
+    { label: "Lessons Completed", value: "0", icon: "graduation-cap", color: C.gold },
+    { label: "Compliance Score", value: "--%", icon: "shield-check", color: C.green },
   ]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,10 +193,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
         }
 
         setStats([
-          { label: "Cases Analyzed", value: String(casesCount || 0), icon: "⚖️", color: C.teal },
-          { label: "Reports Generated", value: String(reportsCount || 0), icon: "📄", color: C.navy },
-          { label: "Lessons Completed", value: String(lessonsCompletedCount), icon: "🎓", color: C.gold },
-          { label: "Compliance Score", value: complianceScoreDisplay, icon: "✅", color: C.green },
+          { label: "Cases Analyzed", value: String(casesCount || 0), icon: "scale", color: C.teal },
+          { label: "Reports Generated", value: String(reportsCount || 0), icon: "file-text", color: C.navy },
+          { label: "Lessons Completed", value: String(lessonsCompletedCount), icon: "graduation-cap", color: C.gold },
+          { label: "Compliance Score", value: complianceScoreDisplay, icon: "shield-check", color: C.green },
         ]);
 
         // 5. Build Recent Activity feed
@@ -256,8 +270,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
       animate="show"
     >
       <motion.div variants={itemVariants} style={{ marginBottom: 32 }}>
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
-          Welcome back, {user.full_name?.split(" ")[0] || "User"} 👋
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}>
+          Welcome back, {user.full_name?.split(" ")[0] || "User"}{" "}
+          <Sparkles size={22} style={{ color: C.gold, display: "inline-block" }} />
         </h1>
         <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>Here&apos;s what&apos;s happening with your TaxWise account today.</p>
       </motion.div>
@@ -274,10 +289,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                   background: `${s.color}12`, // 10% opacity hex
                   display: "flex", 
                   alignItems: "center", 
-                  justifyContent: "center", 
-                  fontSize: "1.3rem" 
+                  justifyContent: "center"
                 }}>
-                  {s.icon}
+                  {getIconComponent(s.icon, 20, s.color)}
                 </div>
                 <Sparkline type={getSparklineType(s.label)} color={s.color} />
               </div>
@@ -301,12 +315,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
             <div style={{ fontWeight: 800, color: C.navy, marginBottom: 20, fontSize: "0.98rem", letterSpacing: "-0.01em" }}>Quick Actions</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
-                { label: "📄 Analyze a New Case", page: "analyzer" },
-                { label: "🧮 Open Calculators", page: "calculators" },
-                { label: "🧠 Browse Intelligence", page: "intelligence" },
-                { label: "📚 Continue Learning", page: "education" },
-                { label: "🔍 Search TAT Cases", page: "library" },
-                { label: "✅ Run Compliance Check", page: "compliance" },
+                { label: "Analyze a New Case", icon: <Scale size={16} style={{ color: C.teal }} />, page: "analyzer" },
+                { label: "Open Calculators", icon: <Calculator size={16} style={{ color: C.navy }} />, page: "calculators" },
+                { label: "Browse Intelligence", icon: <Brain size={16} style={{ color: C.gold }} />, page: "intelligence" },
+                { label: "Continue Learning", icon: <BookOpen size={16} style={{ color: C.navy }} />, page: "education" },
+                { label: "Search TAT Cases", icon: <Search size={16} style={{ color: C.teal }} />, page: "library" },
+                { label: "Run Compliance Check", icon: <ShieldCheck size={16} style={{ color: C.green }} />, page: "compliance" },
               ].map(a => (
                 <QuickActionButton
                   key={a.label}
@@ -350,11 +364,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "0.85rem",
                       flexShrink: 0,
                       boxShadow: "0 2px 4px rgba(15, 32, 68, 0.05)"
                     }}>
-                      {r.type.includes("Case") ? "⚖️" : "✅"}
+                      {r.type.includes("Case") ? <Scale size={16} style={{ color: C.teal }} /> : <ShieldCheck size={16} style={{ color: C.navy }} />}
                     </div>
                     <div style={{ flex: 1, paddingTop: 2 }}>
                       <div style={{ fontSize: "0.88rem", fontWeight: 700, color: C.navy, lineHeight: 1.4 }}>{r.title}</div>
@@ -368,7 +381,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                 ))
               ) : (
                 <div style={{ fontSize: "0.85rem", color: C.muted, textAlign: "center", padding: "32px 0" }}>
-                  <div style={{ fontSize: "1.8rem", marginBottom: 8, opacity: 0.5 }}>📂</div>
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 12, opacity: 0.5 }}>
+                    <FolderOpen size={32} style={{ color: C.muted }} />
+                  </div>
                   No recent activity found. Get started by exploring the tools!
                 </div>
               )}

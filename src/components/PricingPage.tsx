@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { C } from "../lib/constants";
 import { Button, Card } from "./UI";
+import { Clock, Check, CreditCard, Loader2 } from "lucide-react";
 
 interface PricingPageProps {
   user: {
@@ -200,12 +201,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "1.5rem",
-                      fontWeight: 800,
                       marginBottom: 16,
                     }}
                   >
-                    ⏰
+                    <Clock size={20} />
                   </div>
                   <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.6rem", fontWeight: 800, color: C.navy, marginBottom: 8 }}>
                     Coming Soon
@@ -280,8 +279,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
 
                 <div style={{ borderTop: `1px solid rgba(15,32,68,0.05)`, paddingTop: 20, marginBottom: 24 }}>
                   {p.features.map((f) => (
-                    <div key={f} style={{ fontSize: "0.85rem", color: C.text, marginBottom: 12, display: "flex", gap: 8, alignItems: "flex-start", fontWeight: 500 }}>
-                      <span style={{ color: C.teal, fontWeight: 800, marginTop: 1 }}>✓</span>
+                    <div key={f} style={{ fontSize: "0.85rem", color: C.text, marginBottom: 12, display: "flex", gap: 8, alignItems: "center", fontWeight: 500 }}>
+                      <Check size={14} style={{ color: C.teal }} strokeWidth={3} />
                       <span>{f}</span>
                     </div>
                   ))}
@@ -292,9 +291,21 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
                 onClick={() => !isCurrentPlan && initiatePayment(p.key)}
                 variant={p.popular ? "primary" : "outline"}
                 disabled={isCurrentPlan || loadingPlan !== null}
-                style={{ width: "100%", justifyContent: "center" }}
+                style={{ width: "100%", justifyContent: "center", display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                {loadingPlan === p.key ? "⟳ Connecting Gateway..." : isCurrentPlan ? "✓ Active Plan" : p.cta}
+                {loadingPlan === p.key ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Connecting Gateway...</span>
+                  </>
+                ) : isCurrentPlan ? (
+                  <>
+                    <Check size={14} strokeWidth={3} />
+                    <span>Active Plan</span>
+                  </>
+                ) : (
+                  p.cta
+                )}
               </Button>
             </Card>
           );
@@ -304,7 +315,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
       <Card style={{ padding: 28, background: C.navy, border: "none", boxShadow: "0 10px 24px rgba(15,32,68,0.15)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
           <div>
-            <div style={{ fontWeight: 800, color: C.white, marginBottom: 4, fontSize: "0.95rem" }}>💳 Secure Mobile Money & Card Gateway</div>
+            <div style={{ fontWeight: 800, color: C.white, marginBottom: 4, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
+              <CreditCard size={18} style={{ color: C.teal }} />
+              <span>Secure Mobile Money & Card Gateway</span>
+            </div>
             <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.65)", fontWeight: 500 }}>
               Transactions processed locally via secure channels. Instant activation.
             </div>

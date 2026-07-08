@@ -23,23 +23,23 @@ test("Resident progressive calculation is cumulative", () => {
   assert.strictEqual(computeProgressive(12000000, true), 3688250);
 });
 
-test("Non-resident primary employment has first slice taxed at 20%", () => {
-  // First slice taxed at 20%
-  // Tax should be 200,000 * 20% = 40,000
-  assert.strictEqual(computeProgressive(200000, false), 40000);
-  assert.strictEqual(computeProgressive(300000, false), 60000);
+test("Non-resident primary employment has first slice taxed at 10%", () => {
+  // First slice taxed at 10%
+  // Tax should be 200,000 * 10% = 20,000
+  assert.strictEqual(computeProgressive(200000, false), 20000);
+  assert.strictEqual(computeProgressive(300000, false), 30000);
 
   // Higher bands: 335,000 to 410,000 (20% band)
-  // Tax should be 67,000 + (400,000 - 335,000) * 20% = 67,000 + 13,000 = 80,000
-  assert.strictEqual(computeProgressive(400000, false), 80000);
+  // Tax should be 33,500 + (400,000 - 335,000) * 20% = 33,500 + 15,000 = 48,500
+  assert.strictEqual(computeProgressive(400000, false), 48500);
 
-  // 410,000 to 485,000 (25% band)
-  // Tax should be 82,000 + (450,000 - 410,000) * 25% = 82,000 + 10,000 = 92,000
-  assert.strictEqual(computeProgressive(450000, false), 92000);
+  // 410,000 to 10,000,000 (30% band)
+  // Tax should be 48,500 + (450,000 - 410,000) * 30% = 48,500 + 12,000 = 60500
+  assert.strictEqual(computeProgressive(450000, false), 60500);
 
   // Above 10,000,000 (40% band)
-  // Tax should be 2,955,250 + (12,000,000 - 10,000,000) * 40% = 2,955,250 + 800,000 = 3,755,250
-  assert.strictEqual(computeProgressive(12000000, false), 3755250);
+  // Tax should be 2,925,500 + (12,000,000 - 10,000,000) * 40% = 2,925,500 + 800,000 = 3,725,500
+  assert.strictEqual(computeProgressive(12000000, false), 3725500);
 });
 
 test("Secondary employment uses flat 40% regardless of income", () => {

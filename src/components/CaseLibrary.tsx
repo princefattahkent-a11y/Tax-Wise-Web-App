@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
 import { Badge, Card, Modal } from "./UI";
+import { Search, FolderOpen, Calendar, Sparkles } from "lucide-react";
 
 interface TatCase {
   id: string;
@@ -108,7 +109,7 @@ export const CaseLibrary: React.FC = () => {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="🔍  Search by case title, TAT reference code, keywords, or tax rules..."
+          placeholder="Search by case title, TAT reference code, keywords, or tax rules..."
           className="input-focus-ring"
           style={{
             width: "100%",
@@ -180,8 +181,12 @@ export const CaseLibrary: React.FC = () => {
                   <div style={{ fontWeight: 800, color: C.navy, fontSize: "1rem", marginBottom: 4 }}>
                     {c.title}
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: C.muted, marginBottom: 12, fontWeight: 600, letterSpacing: "0.01em" }}>
-                    📂 {c.case_number} · 📅 {c.year}
+                  <div style={{ fontSize: "0.78rem", color: C.muted, marginBottom: 12, fontWeight: 600, letterSpacing: "0.01em", display: "flex", alignItems: "center", gap: 6 }}>
+                    <FolderOpen size={12} />
+                    <span>{c.case_number}</span>
+                    <span>·</span>
+                    <Calendar size={12} />
+                    <span>{c.year}</span>
                   </div>
                   <p style={{ fontSize: "0.875rem", color: C.text, lineHeight: 1.65, fontWeight: 500 }}>
                     {c.summary}
@@ -205,7 +210,9 @@ export const CaseLibrary: React.FC = () => {
           
           {filtered.length === 0 && (
             <div style={{ textAlign: "center", padding: 60, color: C.muted }}>
-              <div style={{ fontSize: "2rem", marginBottom: 8 }}>🔍</div>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                <Search size={32} style={{ color: C.muted, opacity: 0.5 }} />
+              </div>
               <div style={{ fontSize: "0.9rem", fontWeight: 600 }}>No precedents found</div>
               <p style={{ fontSize: "0.82rem", color: C.muted, marginTop: 4 }}>Try altering search keywords or checking filter properties.</p>
             </div>
@@ -232,8 +239,9 @@ export const CaseLibrary: React.FC = () => {
                 <Badge color={C.navy} bg="#E8EDF5" style={{ fontWeight: 800 }}>
                   {selected.tax_type}
                 </Badge>
-                <Badge color={C.muted} bg={C.offwhite} style={{ fontWeight: 800 }}>
-                  📅 {selected.year}
+                <Badge color={C.muted} bg={C.offwhite} style={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Calendar size={11} />
+                  <span>{selected.year}</span>
                 </Badge>
               </div>
             </div>
@@ -252,9 +260,13 @@ export const CaseLibrary: React.FC = () => {
                     textTransform: "uppercase",
                     letterSpacing: ".08em",
                     marginBottom: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
-                  ✦ AI Summary & Legal Commentary
+                  <Sparkles size={13} style={{ color: C.gold }} />
+                  <span>AI Summary & Legal Commentary</span>
                 </div>
                 <div style={{ fontSize: "0.9rem", color: C.text, lineHeight: 1.85, fontWeight: 500, textAlign: "justify" }}>
                   {selected.ai_commentary.split("\n").map((line, index) => {

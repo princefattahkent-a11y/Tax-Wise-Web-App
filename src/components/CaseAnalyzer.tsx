@@ -7,6 +7,7 @@ import {
   SUPPORTED_DOCUMENT_ACCEPT,
 } from "../lib/documentTypes";
 import { Badge, Button, Card } from "./UI";
+import { BookOpen, X, Search, FolderOpen, Calendar, Scale, FileText, Paperclip, Sparkles, AlertTriangle, BarChart2 } from "lucide-react";
 
 interface CaseAnalyzerProps {
   user: {
@@ -241,8 +242,9 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
           flexShrink: 0,
         }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: "1.05rem", color: C.navy }}>
-              📚 Browse Case Library
+            <div style={{ fontWeight: 800, fontSize: "1.05rem", color: C.navy, display: "flex", alignItems: "center", gap: 8 }}>
+              <BookOpen size={18} style={{ color: C.teal }} />
+              Browse Case Library
             </div>
             <div style={{ fontSize: "0.78rem", color: C.muted, marginTop: 2, fontWeight: 500 }}>
               Select a TAT precedent to load it into the analyzer
@@ -258,7 +260,6 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
               borderRadius: "50%",
               cursor: "pointer",
               color: C.muted,
-              fontSize: "0.85rem",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -267,7 +268,7 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
             onMouseOver={e => { e.currentTarget.style.background = "rgba(15,32,68,0.08)"; e.currentTarget.style.color = C.navy; }}
             onMouseOut={e => { e.currentTarget.style.background = "rgba(15,32,68,0.04)"; e.currentTarget.style.color = C.muted; }}
           >
-            ✕
+            <X size={15} />
           </button>
         </div>
 
@@ -276,7 +277,7 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="🔍  Search by case title, TAT reference, keywords..."
+            placeholder="Search by case title, TAT reference, keywords..."
             className="input-focus-ring"
             style={{
               width: "100%",
@@ -336,7 +337,9 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: 48, color: C.muted }}>
-              <div style={{ fontSize: "2rem", marginBottom: 8 }}>🔍</div>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                <Search size={32} style={{ color: C.muted, opacity: 0.5 }} />
+              </div>
               <div style={{ fontSize: "0.875rem", fontWeight: 600 }}>No cases found</div>
               <p style={{ fontSize: "0.8rem", marginTop: 4 }}>Try adjusting your search or filters.</p>
             </div>
@@ -373,8 +376,12 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, color: C.navy, fontSize: "0.9rem", marginBottom: 2 }}>{c.title}</div>
-                    <div style={{ fontSize: "0.73rem", color: C.muted, fontWeight: 600, marginBottom: 6 }}>
-                      📂 {c.case_number} · 📅 {c.year}
+                    <div style={{ fontSize: "0.73rem", color: C.muted, fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                      <FolderOpen size={12} style={{ display: "inline-block" }} />
+                      <span>{c.case_number}</span>
+                      <span>·</span>
+                      <Calendar size={12} style={{ display: "inline-block" }} />
+                      <span>{c.year}</span>
                     </div>
                     <p style={{ fontSize: "0.8rem", color: C.text, lineHeight: 1.55, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                       {c.summary}
@@ -413,7 +420,7 @@ async function downloadResultAsPDF(result: AnalysisResult, caseType: string) {
 
   const riskLabel = result.risk?.toUpperCase() ?? "N/A";
   const issuesList = result.keyIssues?.map((i, n) => `<li>${n + 1}. ${i}</li>`).join("") ?? "";
-  const lawBadges = result.applicableLaw?.map(l => `<span class="badge badge-law">⚖️ ${l}</span>`).join("") ?? "N/A";
+  const lawBadges = result.applicableLaw?.map(l => `<span class="badge badge-law">${l}</span>`).join("") ?? "N/A";
   const tagBadges = result.tags?.map(t => `<span class="badge badge-tag">#${t}</span>`).join("") ?? "";
   const riskClass = result.risk === "high" ? "risk-high" : result.risk === "medium" ? "risk-med" : "risk-low";
 
@@ -878,7 +885,10 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
         {/* ── Left: Input Card ── */}
         <motion.div variants={itemVariants}>
           <Card style={{ padding: 28 }}>
-            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 20, fontSize: "0.98rem" }}>📄 Document & Details Input</div>
+            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 20, fontSize: "0.98rem", display: "flex", alignItems: "center", gap: 8 }}>
+              <FileText size={18} style={{ color: C.teal }} />
+              <span>Document & Details Input</span>
+            </div>
 
           {/* PDF Upload Dropzone */}
           <div
@@ -908,8 +918,12 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
               style={{ display: "none" }}
               onChange={handleFileChange}
             />
-            <div style={{ fontSize: "1.8rem", marginBottom: 8, animation: dragActive ? "spin 1s linear infinite" : "none" }}>
-              {fileName ? "📄" : "📎"}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              {fileName ? (
+                <FileText size={32} style={{ color: C.teal }} />
+              ) : (
+                <Paperclip size={32} style={{ color: C.muted, transform: "rotate(45deg)" }} />
+              )}
             </div>
             <div style={{ fontSize: "0.85rem", fontWeight: 700, color: fileName ? C.teal : C.navy }}>
               {fileName || "Upload Case Doc / URA Assessment"}
@@ -949,7 +963,8 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
                 e.currentTarget.style.color = C.navy;
               }}
             >
-              📚 Browse Case Library
+              <BookOpen size={14} />
+              <span>Browse Case Library</span>
             </button>
           </div>
 
@@ -1013,7 +1028,10 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
       <motion.div variants={itemVariants}>
         <Card style={{ padding: 28, minHeight: 460, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: "1px solid rgba(15,32,68,0.05)", paddingBottom: 16 }}>
-            <div style={{ fontWeight: 800, color: C.navy, fontSize: "0.98rem" }}>✦ Analysis Findings</div>
+            <div style={{ fontWeight: 800, color: C.navy, fontSize: "0.98rem", display: "flex", alignItems: "center", gap: 8 }}>
+              <Sparkles size={18} style={{ color: C.gold }} />
+              <span>Analysis Findings</span>
+            </div>
             {result && !result.error && (
               <Button onClick={downloadReport} small variant="outline">
                 ⬇ Download PDF
@@ -1034,7 +1052,7 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
                 padding: "40px 0"
               }}
             >
-              <div style={{ fontSize: "3rem", opacity: 0.25 }}>📊</div>
+              <BarChart2 size={48} style={{ color: C.muted, opacity: 0.25 }} />
               <div style={{ fontSize: "0.9rem", fontWeight: 600 }}>Ready for case analysis</div>
               <p style={{ fontSize: "0.78rem", color: C.muted, textAlign: "center", maxWidth: 240 }}>
                 Upload your document or paste the content on the left to see findings.
@@ -1063,8 +1081,8 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
           )}
 
           {result && result.error && (
-            <div style={{ color: C.red, fontSize: "0.875rem", padding: "24px 0", textAlign: "center" }}>
-              <div style={{ fontSize: "2rem", marginBottom: 8 }}>⚠</div>
+            <div style={{ color: C.red, fontSize: "0.875rem", padding: "24px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <AlertTriangle size={32} style={{ color: C.red }} />
               <strong>Analysis failed.</strong>
               <p style={{ marginTop: 8, fontSize: "0.82rem", color: C.muted }}>
                 Please check your internet connection and verify that you have added your Google Gemini API Key in `.env.local`.
@@ -1161,8 +1179,9 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
                       <div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {result.applicableLaw.map((l) => (
-                            <Badge key={l} color={C.navy} bg="#E8EDF5">
-                              ⚖️ {l}
+                            <Badge key={l} color={C.navy} bg="#E8EDF5" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <Scale size={11} />
+                              <span>{l}</span>
                             </Badge>
                           ))}
                         </div>
@@ -1190,7 +1209,10 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
     {/* Recent Analyses */}
     {reports.length > 0 && (
       <motion.div variants={itemVariants} style={{ marginTop: 36 }}>
-        <div style={{ fontWeight: 800, color: C.navy, marginBottom: 16, fontSize: "0.98rem" }}>📁 Recent Analyses Reports</div>
+        <div style={{ fontWeight: 800, color: C.navy, marginBottom: 16, fontSize: "0.98rem", display: "flex", alignItems: "center", gap: 8 }}>
+          <FolderOpen size={18} style={{ color: C.teal }} />
+          <span>Recent Analyses Reports</span>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
           {reports.map((r) => (
             <Card
@@ -1201,8 +1223,9 @@ export const CaseAnalyzer: React.FC<CaseAnalyzerProps> = ({ user }) => {
             >
               <div>
                 <div style={{ fontSize: "0.875rem", fontWeight: 700, color: C.navy, lineHeight: 1.45 }}>{r.title}</div>
-                <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4, fontWeight: 500 }}>
-                  📅 {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                <div style={{ fontSize: "0.75rem", color: C.muted, marginTop: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 5 }}>
+                  <Calendar size={12} />
+                  <span>{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", borderTop: "1px solid rgba(15,32,68,0.04)", paddingTop: 10 }}>

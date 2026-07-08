@@ -16,11 +16,10 @@ export const PAYE_BANDS_RESIDENT: TaxBand[] = [
 
 // Uganda Income Tax (Amendment) Act, 2026 Schedule 4 Part I Non-Resident Bands
 export const PAYE_BANDS_NONRESIDENT: TaxBand[] = [
-  { min: 0, max: 335000, rate: 0.2, baseTax: 0 },
-  { min: 335000, max: 410000, rate: 0.2, baseTax: 67000 },
-  { min: 410000, max: 485000, rate: 0.25, baseTax: 82000 },
-  { min: 485000, max: 10000000, rate: 0.3, baseTax: 100750 },
-  { min: 10000000, max: Infinity, rate: 0.4, baseTax: 2955250 },
+  { min: 0, max: 335000, rate: 0.1, baseTax: 0 },
+  { min: 335000, max: 410000, rate: 0.2, baseTax: 33500 },
+  { min: 410000, max: 10000000, rate: 0.3, baseTax: 48500 },
+  { min: 10000000, max: Infinity, rate: 0.4, baseTax: 2925500 },
 ];
 
 export const SECONDARY_FLAT_RATE = 0.40; // Flat 40%

@@ -405,7 +405,7 @@ export const PayeCalculator: React.FC = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span style={{ fontSize: "13px", fontWeight: 800, color: C.navy }}>Income Tax (Amendment) Act 2026 Audit Note</span>
               <p style={{ fontSize: "12px", color: C.muted, margin: 0, lineHeight: 1.6 }}>
-                <strong>Effective 1 July 2026:</strong> Ensure residency status is toggled correctly. Resident and non-resident schedules diverge significantly: non-residents suffer tax starting at <strong>20% on the very first Shilling</strong> (no tax-exempt nil band), with intermediate bands of <strong>20% and 25%</strong>, whereas residents enjoy a <strong>UGX 335K Nil band</strong> and have <strong>20% and 25%</strong> intermediate bands. Both transition to <strong>30%</strong>, and both suffer an effective <strong>40% rate</strong> on income exceeding UGX 10M. Secondary employment remains a flat <strong>40%</strong>.
+                <strong>Effective 1 July 2026:</strong> Ensure residency status is toggled correctly. Resident and non-resident schedules diverge significantly: non-residents suffer tax starting at <strong>10% on the very first Shilling</strong> (no tax-exempt nil band), with intermediate bands of <strong>20% and 30%</strong>, whereas residents enjoy a <strong>UGX 335K Nil band</strong> and have <strong>20% and 25%</strong> intermediate bands. Both transition to <strong>30% / 40%</strong> top rates, with an additional <strong>10% Surtax</strong> on income exceeding UGX 10M (effective 40% rate). Secondary employment remains a flat <strong>40%</strong>.
               </p>
             </div>
           </div>

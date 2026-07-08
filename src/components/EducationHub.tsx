@@ -3,6 +3,17 @@ import { motion } from "motion/react";
 import { supabase } from "../lib/supabaseClient";
 import { C, levelColors } from "../lib/constants";
 import { Badge, Button, Card, ProgressBar } from "./UI";
+import { Clock, Check, Sparkles, BookOpen, GraduationCap, Scale, Award } from "lucide-react";
+
+const getCourseIcon = (emoji: string, size = 32, color?: string) => {
+  switch (emoji) {
+    case "⚖️": return <Scale size={size} style={{ color }} />;
+    case "🎓": return <GraduationCap size={size} style={{ color }} />;
+    case "📜": return <BookOpen size={size} style={{ color }} />;
+    case "🏆": return <Award size={size} style={{ color }} />;
+    default: return <BookOpen size={size} style={{ color }} />;
+  }
+};
 
 interface Lesson {
   id: string;
@@ -266,8 +277,11 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
               {activeLesson.title}
             </h2>
             
-            <div style={{ fontSize: "0.8rem", color: C.muted, marginBottom: 28, display: "flex", gap: 12, fontWeight: 600 }}>
-              <span>⏱ {activeLesson.duration}</span>
+            <div style={{ fontSize: "0.8rem", color: C.muted, marginBottom: 28, display: "flex", alignItems: "center", gap: 12, fontWeight: 600 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Clock size={12} />
+                <span>{activeLesson.duration}</span>
+              </span>
               <span>•</span>
               <span>{activeCourse.title}</span>
             </div>
@@ -279,8 +293,18 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
             </div>
 
             <div style={{ marginTop: 32, display: "flex", gap: 12, borderTop: "1px solid rgba(15,32,68,0.05)", paddingTop: 24 }}>
-              <Button onClick={() => markLessonComplete(activeLesson.id)} disabled={isCompleted}>
-                {isCompleted ? "✓ Course Lesson Cleared" : "Mark as Complete ✓"}
+              <Button onClick={() => markLessonComplete(activeLesson.id)} disabled={isCompleted} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {isCompleted ? (
+                  <>
+                    <Check size={14} strokeWidth={3} />
+                    <span>Course Lesson Cleared</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Mark as Complete</span>
+                    <Check size={14} strokeWidth={3} />
+                  </>
+                )}
               </Button>
               <Button variant="outline" onClick={() => { setActiveLesson(null); setAiQ(""); setAiAnswer(""); }}>
                 Back to Lessons
@@ -336,7 +360,7 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
                           flexShrink: 0,
                         }}
                       >
-                        {lessonDone ? "✓" : i + 1}
+                        {lessonDone ? <Check size={12} strokeWidth={3} /> : i + 1}
                       </div>
                       <div
                         style={{
@@ -357,8 +381,9 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
 
             {/* AI Tutor Chat log */}
             <Card style={{ padding: 24 }}>
-              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 10, fontSize: "0.95rem" }}>
-                ✦ AI Lesson Tutor
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 10, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 6 }}>
+                <Sparkles size={16} style={{ color: C.gold }} />
+                <span>AI Lesson Tutor</span>
               </div>
               <p style={{ fontSize: "0.78rem", color: C.muted, lineHeight: 1.5, marginBottom: 14 }}>
                 Ask any contextual question regarding this lesson to clarify Uganda tax guidelines.
@@ -445,7 +470,7 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
         <div style={{ display: "grid", gridTemplateColumns: "1fr minmax(280px, 320px)", gap: 28, alignItems: "start" }}>
           <motion.div variants={itemVariants}>
             <div style={{ background: lBg, borderRadius: 20, padding: 36, marginBottom: 24, border: `1px solid ${lColor}15` }}>
-              <div style={{ fontSize: "2.8rem", marginBottom: 14 }}>{activeCourse.emoji}</div>
+              <div style={{ marginBottom: 14 }}>{getCourseIcon(activeCourse.emoji, 44, lColor)}</div>
               <Badge color={lColor} bg={C.white} style={{ boxShadow: "0 2px 8px rgba(15,32,68,0.02)" }}>
                 {activeCourse.level}
               </Badge>
@@ -482,11 +507,14 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
                           flexShrink: 0,
                         }}
                       >
-                        {lessonDone ? "✓" : i + 1}
+                        {lessonDone ? <Check size={14} strokeWidth={3} /> : i + 1}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, color: C.navy, fontSize: "0.92rem" }}>{l.title}</div>
-                        <div style={{ fontSize: "0.76rem", color: C.muted, marginTop: 3, fontWeight: 600 }}>⏱ {l.duration}</div>
+                        <div style={{ fontSize: "0.76rem", color: C.muted, marginTop: 3, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <Clock size={11} />
+                          <span>{l.duration}</span>
+                        </div>
                       </div>
                       <span style={{ color: C.teal, fontSize: "1.1rem", fontWeight: 700 }}>→</span>
                     </div>
@@ -541,11 +569,10 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "3rem",
                   borderBottom: "1px solid rgba(15,32,68,0.03)"
                 }}
               >
-                {c.emoji}
+                {getCourseIcon(c.emoji, 48, lColor)}
               </div>
               <div style={{ padding: 24, flex: 1, display: "flex", flexDirection: "column" }}>
                 <div>

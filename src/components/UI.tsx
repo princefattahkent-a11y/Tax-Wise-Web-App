@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import { C } from "../lib/constants";
+import { X } from "lucide-react";
 
 interface BadgeProps {
   color: string;
@@ -242,7 +243,6 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, wi
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "0.85rem",
               cursor: "pointer",
               color: C.muted,
               transition: "all 0.15s",
@@ -256,7 +256,7 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, wi
               e.currentTarget.style.color = C.muted;
             }}
           >
-            ✕
+            <X size={15} />
           </button>
         </div>
         <div style={{ padding: 28 }}>{children}</div>

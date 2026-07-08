@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
 import { Card, Button } from "./UI";
+import { AlertTriangle } from "lucide-react";
 
 interface DbProfile {
   id: string;
@@ -732,8 +733,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onRefres
                       fontSize: "0.8rem",
                       fontWeight: 500,
                       marginBottom: 16,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
                     }}>
-                      ⚠️ {deleteError}
+                      <AlertTriangle size={14} />
+                      <span>{deleteError}</span>
                     </div>
                   )}
 
