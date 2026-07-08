@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { LayoutDashboard, Settings, LogOut, ChevronDown } from "lucide-react";
 
 interface SiteSettings {
   stat_cases: string;
@@ -189,6 +190,110 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           filter: blur(4px);
         }
 
+        /* Refined Dashboard Dropdown styles */
+        .tw-chevron {
+          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .tw-dd:hover .tw-chevron {
+          transform: rotate(180deg);
+        }
+        
+        .tw-dropdown-container {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: rgba(255, 255, 255, 0.98);
+          border-radius: 12px;
+          box-shadow: 0 10px 25px -5px rgba(15, 32, 68, 0.12), 0 8px 16px -6px rgba(15, 32, 68, 0.06);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          min-width: 220px;
+          z-index: 400;
+          border: 1px solid rgba(15, 32, 68, 0.08);
+          padding: 6px;
+          margin-top: 4px;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-8px);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          pointer-events: none;
+        }
+        
+        .tw-dd:hover .tw-dropdown-container {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
+        
+        .tw-dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          border-radius: 8px;
+          width: 100%;
+          border: none;
+          background: none;
+          cursor: pointer;
+          text-align: left;
+          font-family: inherit;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #374151;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .tw-dropdown-item:hover {
+          background-color: rgba(26, 123, 107, 0.06);
+          color: #1A7B6B;
+          padding-left: 16px;
+        }
+        
+        .tw-dropdown-item svg {
+          color: #6B7280;
+          transition: all 0.2s ease;
+        }
+        
+        .tw-dropdown-item:hover svg {
+          color: #1A7B6B;
+          transform: scale(1.05);
+        }
+        
+        .tw-dropdown-item-logout {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          border-radius: 8px;
+          width: 100%;
+          border: none;
+          background: none;
+          cursor: pointer;
+          text-align: left;
+          font-family: inherit;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #DC2626;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .tw-dropdown-item-logout:hover {
+          background-color: rgba(220, 38, 38, 0.05);
+          color: #DC2626;
+          padding-left: 16px;
+        }
+        
+        .tw-dropdown-item-logout svg {
+          color: #EF4444;
+          transition: all 0.2s ease;
+        }
+        
+        .tw-dropdown-item-logout:hover svg {
+          color: #B91C1C;
+          transform: translateX(2px);
+        }
+
         @media (max-width: 992px) {
           .tw-hero-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
           .tw-hero-text-align { text-align: center; }
@@ -299,30 +404,57 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                   }}
                 >
                   <span>Dashboard</span>
-                  <span style={{ fontSize: ".55rem", opacity: .8 }}>▼</span>
+                  <ChevronDown size={14} className="tw-chevron" />
                 </button>
-                <div className="tw-dropdown" style={{ position: "absolute", top: "100%", right: 0, background: "white", borderRadius: "8px", boxShadow: "0 20px 48px rgba(15,32,68,.16)", minWidth: 160, zIndex: 400, borderTop: "3px solid #1A7B6B", padding: "6px" }}>
-                  <div style={{ padding: "6px 12px", fontSize: "0.72rem", color: "#6B7280", borderBottom: "1px solid rgba(0,0,0,0.06)", marginBottom: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    Signed in as <br/><strong>{dbUser.full_name}</strong>
+                <div className="tw-dropdown-container">
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "10px 12px 12px",
+                    borderBottom: "1px solid rgba(0,0,0,0.06)",
+                    marginBottom: "6px"
+                  }}>
+                    <div style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #1A7B6B 0%, #4DD9C0 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                      fontWeight: 700,
+                      fontSize: "0.85rem",
+                      boxShadow: "0 2px 6px rgba(26,123,107,0.15)",
+                      flexShrink: 0
+                    }}>
+                      {dbUser.full_name ? dbUser.full_name[0].toUpperCase() : "U"}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                      <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1C1C1E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.2 }}>
+                        {dbUser.full_name}
+                      </span>
+                      <span style={{ fontSize: "0.68rem", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {dbUser.email || "Professional"}
+                      </span>
+                    </div>
                   </div>
                   <button onClick={() => {
                     if (onNavigate) onNavigate("dashboard");
-                  }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, width: "100%", border: "none", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: ".8rem", fontWeight: 600, color: "#1C1C1E", transition: "background .15s" }}
-                    onMouseOver={e => (e.currentTarget.style.background = "#F8F7F4")}
-                    onMouseOut={e => (e.currentTarget.style.background = "none")}>
-                    📊 Go to Dashboard
+                  }} className="tw-dropdown-item">
+                    <LayoutDashboard size={15} />
+                    <span>Go to Dashboard</span>
                   </button>
                   <button onClick={() => {
                     if (onNavigate) onNavigate("settings");
-                  }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, width: "100%", border: "none", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: ".8rem", fontWeight: 600, color: "#1C1C1E", transition: "background .15s" }}
-                    onMouseOver={e => (e.currentTarget.style.background = "#F8F7F4")}
-                    onMouseOut={e => (e.currentTarget.style.background = "none")}>
-                    ⚙️ Settings
+                  }} className="tw-dropdown-item">
+                    <Settings size={15} />
+                    <span>Settings</span>
                   </button>
-                  <button onClick={onSignOut} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, width: "100%", border: "none", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: ".8rem", fontWeight: 600, color: "#DC2626", transition: "background .15s" }}
-                    onMouseOver={e => (e.currentTarget.style.background = "#FEF2F2")}
-                    onMouseOut={e => (e.currentTarget.style.background = "none")}>
-                    🚪 Sign Out
+                  <button onClick={onSignOut} className="tw-dropdown-item-logout">
+                    <LogOut size={15} />
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </div>
@@ -369,8 +501,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             })}
             {dbUser ? (
               <>
-                <button onClick={() => { setMobileOpen(false); if (onNavigate) onNavigate("dashboard"); else onGetStarted(); }} style={{ display: "block", padding: "12px 0", color: "#4DD9C0", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>📊 Go to Dashboard</button>
-                <button onClick={() => { setMobileOpen(false); if (onSignOut) onSignOut(); }} style={{ display: "block", padding: "12px 0", color: "#FCA5A5", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 4 }}>🚪 Sign Out</button>
+                <button onClick={() => { setMobileOpen(false); if (onNavigate) onNavigate("dashboard"); else onGetStarted(); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", color: "#4DD9C0", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
+                  <LayoutDashboard size={16} />
+                  <span>Go to Dashboard</span>
+                </button>
+                <button onClick={() => { setMobileOpen(false); if (onSignOut) onSignOut(); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", color: "#FCA5A5", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 4 }}>
+                  <LogOut size={16} />
+                  <span>Sign Out</span>
+                </button>
               </>
             ) : (
               <button onClick={() => { setMobileOpen(false); onGetStarted(); }} style={{ display: "block", padding: "12px 0", color: "#4DD9C0", background: "none", border: "none", fontSize: ".92rem", fontWeight: 700, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>→ Start Free Trial</button>
