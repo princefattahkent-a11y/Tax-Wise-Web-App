@@ -7,7 +7,8 @@ function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
-    throw new Error("Supabase URL or Service Role Key is missing from environment variables.");
+    console.warn("Supabase URL or Service Role Key is missing. Running in robust Demo / Sandbox mode.");
+    return null;
   }
   return createClient(url, serviceKey);
 }
@@ -114,22 +115,41 @@ JSON format:
 
     const title = file ? `File Analysis: ${file.name}` : (rawText.split("\n")[0]?.slice(0, 80) || `Tax Scenario Analysis (${new Date().toLocaleDateString()})`);
     
-    const { data: insertedCase, error: dbError } = await supabaseAdmin
-      .from("cases")
-      .insert({
+    let insertedCase = null;
+    if (supabaseAdmin) {
+      const { data, error: dbError } = await supabaseAdmin
+        .from("cases")
+        .insert({
+          user_id: userId,
+          title,
+          input_text: textToAnalyze.slice(0, 100000),
+          pdf_path: file ? `pdfs/${userId}/${Date.now()}_${file.name}` : null,
+          ai_summary: parsedResult,
+          risk_level: parsedResult.risk || "medium",
+          tags: parsedResult.tags || [],
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error("Supabase DB error saving case:", dbError);
+      } else {
+        insertedCase = data;
+      }
+    } else {
+      console.log("Skipping Supabase insert in Demo / Sandbox mode.");
+      // Create a mock returned case record to satisfy frontend expectations if needed
+      insertedCase = {
+        id: `mock-case-${Date.now()}`,
         user_id: userId,
         title,
-        input_text: textToAnalyze.slice(0, 100000),
+        input_text: textToAnalyze.slice(0, 1000),
         pdf_path: file ? `pdfs/${userId}/${Date.now()}_${file.name}` : null,
         ai_summary: parsedResult,
         risk_level: parsedResult.risk || "medium",
         tags: parsedResult.tags || [],
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error("Supabase DB error saving case:", dbError);
+        created_at: new Date().toISOString()
+      };
     }
 
     return NextResponse.json({

@@ -7,19 +7,20 @@ export interface TaxBand {
 
 // Uganda Income Tax (Amendment) Act, 2026 Schedule 4 Part I Resident Bands
 export const PAYE_BANDS_RESIDENT: TaxBand[] = [
-  { min: 0, max: 235000, rate: 0.0, baseTax: 0 },
-  { min: 235000, max: 335000, rate: 0.1, baseTax: 0 },
-  { min: 335000, max: 410000, rate: 0.2, baseTax: 10000 },
-  { min: 410000, max: 10000000, rate: 0.3, baseTax: 25000 },
-  { min: 10000000, max: Infinity, rate: 0.4, baseTax: 2902000 },
+  { min: 0, max: 335000, rate: 0.0, baseTax: 0 },
+  { min: 335000, max: 410000, rate: 0.2, baseTax: 0 },
+  { min: 410000, max: 485000, rate: 0.25, baseTax: 15000 },
+  { min: 485000, max: 10000000, rate: 0.3, baseTax: 33750 },
+  { min: 10000000, max: Infinity, rate: 0.4, baseTax: 2888250 },
 ];
 
 // Uganda Income Tax (Amendment) Act, 2026 Schedule 4 Part I Non-Resident Bands
 export const PAYE_BANDS_NONRESIDENT: TaxBand[] = [
   { min: 0, max: 335000, rate: 0.2, baseTax: 0 },
-  { min: 335000, max: 410000, rate: 0.25, baseTax: 67000 },
-  { min: 410000, max: 10000000, rate: 0.3, baseTax: 85750 },
-  { min: 10000000, max: Infinity, rate: 0.4, baseTax: 2962750 },
+  { min: 335000, max: 410000, rate: 0.2, baseTax: 67000 },
+  { min: 410000, max: 485000, rate: 0.25, baseTax: 82000 },
+  { min: 485000, max: 10000000, rate: 0.3, baseTax: 100750 },
+  { min: 10000000, max: Infinity, rate: 0.4, baseTax: 2955250 },
 ];
 
 export const SECONDARY_FLAT_RATE = 0.40; // Flat 40%
@@ -42,6 +43,7 @@ export interface PayeCalculationResult {
   allowableDeductions: number;
   chargeableIncome: number;
   taxAmount: number;
+  surtaxAmount: number;
   netPay: number;
   effectiveTaxRate: number;
   bandsUsed: {
@@ -112,6 +114,10 @@ export function calculatePaye(inputs: PayeCalculationInputs): PayeCalculationRes
     taxAmount = Math.round(computeProgressive(chargeableIncome, isResident));
   }
 
+  const surtaxAmount = chargeableIncome > 10000000 && employmentType !== "secondary"
+    ? Math.round((chargeableIncome - 10000000) * 0.1)
+    : 0;
+
   // Net pay = gross total - NSSF - allowable deductions - total tax
   const netPay = Math.max(0, grossTotal - nssfContribution - allowableDeductions - taxAmount);
   const effectiveTaxRate = grossTotal > 0 ? (taxAmount / grossTotal) * 100 : 0;
@@ -128,17 +134,23 @@ export function calculatePaye(inputs: PayeCalculationInputs): PayeCalculationRes
   } else {
     const bands = isResident ? PAYE_BANDS_RESIDENT : PAYE_BANDS_NONRESIDENT;
     
-    // We want to slice the chargeable income across ALL applicable bands
+    // We want to slice the chargeable income across all applicable bands
     for (const band of bands) {
-      if (chargeableIncome > band.min) {
-        const taxableInThisBand = Math.min(
-          chargeableIncome - band.min, 
-          band.max - band.min
-        );
-        const taxInThisBand = Math.round(taxableInThisBand * band.rate);
-        
+      const taxableInThisBand = chargeableIncome > band.min
+        ? Math.min(chargeableIncome - band.min, band.max - band.min)
+        : 0;
+      const taxInThisBand = Math.round(taxableInThisBand * band.rate);
+      
+      if (band.max === Infinity) {
         bandsUsed.push({
-          band: `${band.min.toLocaleString()} to ${band.max === Infinity ? "Infinity" : band.max.toLocaleString()}`,
+          band: `Above 10,000,000`,
+          rate: "30% + 10%",
+          taxableInBand: taxableInThisBand,
+          taxInBand: taxInThisBand,
+        });
+      } else {
+        bandsUsed.push({
+          band: `${band.min.toLocaleString()} to ${band.max.toLocaleString()}`,
           rate: `${Math.round(band.rate * 100)}%`,
           taxableInBand: taxableInThisBand,
           taxInBand: taxInThisBand,
@@ -153,6 +165,7 @@ export function calculatePaye(inputs: PayeCalculationInputs): PayeCalculationRes
     allowableDeductions,
     chargeableIncome,
     taxAmount,
+    surtaxAmount,
     netPay,
     effectiveTaxRate,
     bandsUsed,

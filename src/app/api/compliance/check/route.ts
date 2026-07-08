@@ -7,7 +7,8 @@ function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
-    throw new Error("Supabase URL or Service Role Key is missing from environment variables.");
+    console.warn("Supabase URL or Service Role Key is missing. Running in robust Demo / Sandbox mode.");
+    return null;
   }
   return createClient(url, serviceKey);
 }
@@ -54,20 +55,36 @@ ${(gaps as string[]).length > 0 ? (gaps as string[]).map((g: string) => `• ${g
     }
 
     // Save report to compliance_reports table
-    const { data: insertedReport, error: dbError } = await supabaseAdmin
-      .from("compliance_reports")
-      .insert({
+    let insertedReport = null;
+    if (supabaseAdmin) {
+      const { data, error: dbError } = await supabaseAdmin
+        .from("compliance_reports")
+        .insert({
+          user_id: userId,
+          type: complianceType,
+          responses: responses || {},
+          risk_report: responseText,
+          score: score,
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error("Supabase DB error saving compliance report:", dbError);
+      } else {
+        insertedReport = data;
+      }
+    } else {
+      console.log("Skipping Supabase insert for compliance check in Demo / Sandbox mode.");
+      insertedReport = {
+        id: `mock-compliance-${Date.now()}`,
         user_id: userId,
         type: complianceType,
         responses: responses || {},
         risk_report: responseText,
         score: score,
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error("Supabase DB error saving compliance report:", dbError);
+        created_at: new Date().toISOString()
+      };
     }
 
     return NextResponse.json({

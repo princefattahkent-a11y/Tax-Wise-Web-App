@@ -32,16 +32,16 @@ const Tooltip: React.FC<TooltipProps> = ({ text }) => {
       <AnimatePresence>
         {show && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
             style={{
               position: "absolute",
-              bottom: "100%",
+              top: "100%",
               left: "50%",
               transform: "translateX(-50%)",
-              marginBottom: 8,
+              marginTop: 8,
               background: C.navy,
               color: C.white,
               padding: "8px 12px",
@@ -60,12 +60,12 @@ const Tooltip: React.FC<TooltipProps> = ({ text }) => {
             <div 
               style={{
                 position: "absolute",
-                top: "100%",
+                bottom: "100%",
                 left: "50%",
                 transform: "translateX(-50%)",
                 borderWidth: "6px",
                 borderStyle: "solid",
-                borderColor: `${C.navy} transparent transparent transparent`,
+                borderColor: `transparent transparent ${C.navy} transparent`,
               }}
             />
           </motion.div>
@@ -405,7 +405,7 @@ export const PayeCalculator: React.FC = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span style={{ fontSize: "13px", fontWeight: 800, color: C.navy }}>Income Tax (Amendment) Act 2026 Audit Note</span>
               <p style={{ fontSize: "12px", color: C.muted, margin: 0, lineHeight: 1.6 }}>
-                <strong>Effective 1 July 2026:</strong> Ensure residency status is toggled correctly. Resident and non-resident schedules diverge significantly: non-residents suffer tax starting at <strong>20% on the very first Shilling</strong> (no tax-exempt nil band), with intermediate bands up to <strong>25% and 30%</strong>, whereas residents retain a <strong>UGX 235K Nil band</strong> and have <strong>10% and 20%</strong> intermediate bands. Both transition to <strong>30%</strong>, and both suffer an effective <strong>40% rate</strong> on income exceeding UGX 10M. Secondary employment remains a flat <strong>40%</strong>.
+                <strong>Effective 1 July 2026:</strong> Ensure residency status is toggled correctly. Resident and non-resident schedules diverge significantly: non-residents suffer tax starting at <strong>20% on the very first Shilling</strong> (no tax-exempt nil band), with intermediate bands of <strong>20% and 25%</strong>, whereas residents enjoy a <strong>UGX 335K Nil band</strong> and have <strong>20% and 25%</strong> intermediate bands. Both transition to <strong>30%</strong>, and both suffer an effective <strong>40% rate</strong> on income exceeding UGX 10M. Secondary employment remains a flat <strong>40%</strong>.
               </p>
             </div>
           </div>
@@ -448,6 +448,18 @@ export const PayeCalculator: React.FC = () => {
                 <span style={{ color: C.muted, fontWeight: 500 }}>Chargeable Income:</span>
                 <span style={{ color: C.navy, fontWeight: 700 }}>{formatUGX(results.chargeableIncome)}</span>
               </div>
+              {results.surtaxAmount > 0 ? (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                    <span style={{ color: C.muted, fontWeight: 500 }}>Base PAYE Tax (up to 10M):</span>
+                    <span style={{ color: C.navy, fontWeight: 700 }}>{formatUGX(results.taxAmount - results.surtaxAmount)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                    <span style={{ color: C.muted, fontWeight: 500 }}>Additional 10% Surtax (above 10M):</span>
+                    <span style={{ color: C.red, fontWeight: 700 }}>{formatUGX(results.surtaxAmount)}</span>
+                  </div>
+                </>
+              ) : null}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
                 <span style={{ color: C.muted, fontWeight: 700 }}>Total PAYE Tax:</span>
                 <span style={{ color: C.red, fontWeight: 800 }}>{formatUGX(results.taxAmount)}</span>

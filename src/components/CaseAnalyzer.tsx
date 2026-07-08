@@ -50,35 +50,52 @@ interface TatCase {
 
 // ─── Risk Gauge ───────────────────────────────────────────────────────────────
 const RiskGauge = ({ level }: { level: "low" | "medium" | "high" }) => {
-  const isLow = level === "low";
-  const isMed = level === "medium";
-  const isHigh = level === "high";
+  const normLevel = (level || "low").toLowerCase();
+  const isLow = normLevel === "low";
+  const isMed = normLevel === "medium";
+  const isHigh = normLevel === "high";
 
   return (
-    <div style={{ display: "flex", gap: 6, alignItems: "center", width: "100%", maxWidth: 220 }}>
-      {[
-        { label: "LOW", active: isLow || isMed || isHigh, color: C.teal, bg: C.tealLight },
-        { label: "MED", active: isMed || isHigh, color: C.gold, bg: C.goldLight },
-        { label: "HIGH", active: isHigh, color: C.red, bg: C.redLight }
-      ].map((bar) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", maxWidth: 160 }}>
+      {/* 3 Pill-Shaped Segment Tracks */}
+      <div style={{ display: "flex", gap: 5, height: 6 }}>
         <div
-          key={bar.label}
           style={{
             flex: 1,
-            padding: "4px 0",
-            borderRadius: 4,
-            fontSize: "0.65rem",
-            fontWeight: 800,
-            textAlign: "center",
-            transition: "all 0.3s ease",
-            background: bar.active ? bar.bg : "#E5E7EB",
-            color: bar.active ? bar.color : C.muted,
-            border: bar.active ? `1px solid ${bar.color}25` : "1px solid transparent"
+            borderRadius: 3,
+            background: isLow || isMed || isHigh ? C.teal : "rgba(15, 32, 68, 0.06)",
+            transition: "all 0.3s ease"
           }}
-        >
-          {bar.label}
-        </div>
-      ))}
+        />
+        <div
+          style={{
+            flex: 1,
+            borderRadius: 3,
+            background: isMed || isHigh ? C.gold : "rgba(15, 32, 68, 0.06)",
+            transition: "all 0.3s ease"
+          }}
+        />
+        <div
+          style={{
+            flex: 1,
+            borderRadius: 3,
+            background: isHigh ? C.red : "rgba(15, 32, 68, 0.06)",
+            transition: "all 0.3s ease"
+          }}
+        />
+      </div>
+      {/* Micro-Labels below */}
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "0 2px" }}>
+        <span style={{ fontSize: "0.6rem", fontWeight: 800, color: isLow ? C.teal : "rgba(15, 32, 68, 0.3)", letterSpacing: "0.04em", transition: "color 0.3s ease" }}>
+          LOW
+        </span>
+        <span style={{ fontSize: "0.6rem", fontWeight: 800, color: isMed ? C.gold : "rgba(15, 32, 68, 0.3)", letterSpacing: "0.04em", transition: "color 0.3s ease" }}>
+          MED
+        </span>
+        <span style={{ fontSize: "0.6rem", fontWeight: 800, color: isHigh ? C.red : "rgba(15, 32, 68, 0.3)", letterSpacing: "0.04em", transition: "color 0.3s ease" }}>
+          HIGH
+        </span>
+      </div>
     </div>
   );
 };
@@ -424,6 +441,8 @@ async function downloadResultAsPDF(result: AnalysisResult, caseType: string) {
       background: linear-gradient(135deg, #0F2044 0%, #1A7B6B 100%);
       color: #fff;
       padding: 36px 48px 28px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .cover-logo { font-size: 9pt; letter-spacing: .12em; text-transform: uppercase; opacity: .65; margin-bottom: 4px; }
     .cover-title {
@@ -464,11 +483,13 @@ async function downloadResultAsPDF(result: AnalysisResult, caseType: string) {
       border-radius: 10px;
       padding: 14px 20px;
       margin-bottom: 24px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .risk-label { font-size: 8pt; font-weight: 800; color: #0F2044; text-transform: uppercase; letter-spacing: .06em; }
 
     /* Sections */
-    .section { margin-bottom: 22px; }
+    .section { margin-bottom: 22px; page-break-inside: avoid; break-inside: avoid; }
     .section-title {
       font-size: 8.5pt;
       font-weight: 800;
@@ -623,7 +644,7 @@ async function downloadResultAsPDF(result: AnalysisResult, caseType: string) {
     image: { type: "jpeg" as const, quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, allowTaint: true },
     jsPDF: { unit: "pt" as const, format: "a4", orientation: "portrait" as const },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+    pagebreak: { mode: ["css", "legacy"] }
   };
   
   // Generate and download PDF

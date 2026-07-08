@@ -133,8 +133,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
 
   const plans = [
     { name: "Starter", price: "Free", period: "Forever", features: ["5 case analyses / month", "Basic TAT library search", "PAYE & VAT calculator tool", "Vehicle import calculator", "Standard email support"], cta: "Get Started Free", popular: false },
-    { name: "Professional", price: "UGX 120,000", period: "/ month", features: ["Unlimited case analyses", "Full TAT case library + AI commentary", "All tax & import calculators", "eFRIS, VAT & PAYE Compliance Checker", "Exportable PDF reports for clients", "Priority chat support"], cta: "Start 14-Day Trial", popular: true },
-    { name: "Firm", price: "UGX 350,000", period: "/ month", features: ["Everything in Professional", "Up to 8 team seats", "Admin portal & firm usage metrics", "API access (beta program)", "Dedicated account setup", "ICPAU CPD certificates"], cta: "Contact Sales", popular: false },
+    { name: "Professional", price: "UGX 120,000", period: "/ month", features: ["Unlimited case analyses", "Full TAT case library + AI commentary", "All tax & import calculators", "eFRIS, VAT & PAYE Compliance Checker", "Exportable PDF reports for clients", "Priority chat support"], cta: "Start 14-Day Trial", popular: true, comingSoon: true },
+    { name: "Firm", price: "UGX 350,000", period: "/ month", features: ["Everything in Professional", "Up to 8 team seats", "Admin portal & firm usage metrics", "API access (beta program)", "Dedicated account setup", "ICPAU CPD certificates"], cta: "Contact Sales", popular: false, comingSoon: true },
   ];
 
   return (
@@ -484,37 +484,92 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           </div>
           
           <div className="tw-price-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, alignItems: "stretch" }}>
-            {plans.map(plan => (
-              <div key={plan.name} className={`tw-price-card ${plan.popular ? 'glow-border' : ''}`} style={{ background: plan.popular ? "#1A7B6B" : "rgba(255,255,255,0.04)", border: plan.popular ? "none" : "1px solid rgba(255,255,255,.08)", borderRadius: 16, padding: "32px 28px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                <div>
-                  {plan.popular && <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "#C8922A", color: "white", fontSize: ".68rem", fontWeight: 800, padding: "4px 14px", borderRadius: 50, whiteSpace: "nowrap", letterSpacing: "0.04em", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>MOST POPULAR</div>}
-                  <div style={{ fontSize: ".7rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: plan.popular ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,.4)", marginBottom: 10 }}>{plan.name}</div>
-                  <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "2.4rem", color: "white", fontWeight: 700 }}>{plan.price}</div>
-                  <div style={{ fontSize: ".8rem", color: plan.popular ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,.35)", marginBottom: 24, fontWeight: 500 }}>{plan.period}</div>
-                  <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,.12)", margin: "20px 0" }} />
+            {plans.map(plan => {
+              if (plan.comingSoon) {
+                return (
+                  <div
+                    key={plan.name}
+                    style={{
+                      background: "rgba(255,255,255,0.01)",
+                      border: "1px dashed rgba(255,255,255,0.15)",
+                      borderRadius: 16,
+                      padding: "48px 28px",
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      textAlign: "center",
+                      minHeight: "420px",
+                      opacity: 0.8
+                    }}
+                  >
+                    <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", background: "#C8922A", color: "white", fontSize: ".68rem", fontWeight: 800, padding: "4px 14px", borderRadius: 50, whiteSpace: "nowrap", letterSpacing: "0.04em", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>COMING SOON</div>
+                    <div style={{ fontSize: ".7rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 16 }}>{plan.name}</div>
+                    
+                    <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                      <div
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: "50%",
+                          background: "rgba(200, 146, 42, 0.1)",
+                          color: "#C8922A",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "1.5rem",
+                          fontWeight: 800,
+                          marginBottom: 16,
+                        }}
+                      >
+                        ⏰
+                      </div>
+                      <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.6rem", fontWeight: 700, color: "white", marginBottom: 8 }}>
+                        Coming Soon
+                      </div>
+                      <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.45)", maxWidth: "220px", lineHeight: "1.5", fontWeight: 500 }}>
+                        We are currently finalizing this tier to bring you advanced tax analysis tools.
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={plan.name} className={`tw-price-card ${plan.popular ? 'glow-border' : ''}`} style={{ background: plan.popular ? "#1A7B6B" : "rgba(255,255,255,0.04)", border: plan.popular ? "none" : "1px solid rgba(255,255,255,.08)", borderRadius: 16, padding: "32px 28px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                  <div>
+                    {plan.popular && (
+                      <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "#C8922A", color: "white", fontSize: ".68rem", fontWeight: 800, padding: "4px 14px", borderRadius: 50, whiteSpace: "nowrap", letterSpacing: "0.04em", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>MOST POPULAR</div>
+                    )}
+                    <div style={{ fontSize: ".7rem", fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: plan.popular ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,.4)", marginBottom: 10 }}>{plan.name}</div>
+                    <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "2.4rem", color: "white", fontWeight: 700 }}>{plan.price}</div>
+                    <div style={{ fontSize: ".8rem", color: plan.popular ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,.35)", marginBottom: 24, fontWeight: 500 }}>{plan.period}</div>
+                    <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,.12)", margin: "20px 0" }} />
+                    
+                    <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+                      {plan.features.map(f => (
+                        <li key={f} style={{ fontSize: ".85rem", color: "rgba(255,255,255,.85)", display: "flex", gap: 8, alignItems: "flex-start", lineHeight: 1.4, fontWeight: 500 }}>
+                          <span style={{ color: plan.popular ? "#FFE08A" : "#C8922A", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✓</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                   
-                  <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
-                    {plan.features.map(f => (
-                      <li key={f} style={{ fontSize: ".85rem", color: "rgba(255,255,255,.85)", display: "flex", gap: 8, alignItems: "flex-start", lineHeight: 1.4, fontWeight: 500 }}>
-                        <span style={{ color: plan.popular ? "#FFE08A" : "#C8922A", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✓</span>{f}
-                      </li>
-                    ))}
-                  </ul>
+                  <button onClick={onGetStarted} style={{ display: "block", width: "100%", textAlign: "center", padding: "12px", borderRadius: 8, fontWeight: 700, fontSize: ".88rem", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)", border: plan.popular ? "none" : "1.5px solid rgba(255,255,255,.25)", color: plan.popular ? "#1A7B6B" : "white", background: plan.popular ? "white" : "transparent" }}
+                    onMouseOver={e => { 
+                      if (!plan.popular) e.currentTarget.style.background = "rgba(255,255,255,.08)";
+                      else e.currentTarget.style.transform = "scale(1.02)";
+                    }}
+                    onMouseOut={e => { 
+                      if (!plan.popular) e.currentTarget.style.background = "transparent";
+                      else e.currentTarget.style.transform = "none";
+                    }}>
+                    {plan.cta}
+                  </button>
                 </div>
-                
-                <button onClick={onGetStarted} style={{ display: "block", width: "100%", textAlign: "center", padding: "12px", borderRadius: 8, fontWeight: 700, fontSize: ".88rem", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)", border: plan.popular ? "none" : "1.5px solid rgba(255,255,255,.25)", color: plan.popular ? "#1A7B6B" : "white", background: plan.popular ? "white" : "transparent" }}
-                  onMouseOver={e => { 
-                    if (!plan.popular) e.currentTarget.style.background = "rgba(255,255,255,.08)";
-                    else e.currentTarget.style.transform = "scale(1.02)";
-                  }}
-                  onMouseOut={e => { 
-                    if (!plan.popular) e.currentTarget.style.background = "transparent";
-                    else e.currentTarget.style.transform = "none";
-                  }}>
-                  {plan.cta}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 32, flexWrap: "wrap", gap: 14 }}>

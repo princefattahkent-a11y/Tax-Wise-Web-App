@@ -34,6 +34,13 @@ export default function TaxWiseSaaS() {
   const [view, setView] = useState<"landing" | "auth">("landing");
   const [isRecovering, setIsRecovering] = useState(false);
   const intendedPageRef = useRef<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [page]);
 
   const refreshUser = async () => {
     try {
@@ -497,7 +504,7 @@ export default function TaxWiseSaaS() {
         </header>
 
         {/* PAGE CONTENT */}
-        <div style={{ flex: 1, padding: "36px 40px", overflowY: "auto" }}>
+        <div ref={scrollContainerRef} style={{ flex: 1, padding: "36px 40px", overflowY: "auto" }}>
           <main key={page} className="page-fade-in" style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
             {renderActivePage()}
           </main>

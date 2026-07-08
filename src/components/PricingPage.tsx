@@ -81,6 +81,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
       price: "150K",
       period: "/ month",
       popular: true,
+      comingSoon: true,
       features: [
         "100 case analyses/month",
         "Full AI analysis + precedents",
@@ -97,6 +98,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
       name: "Firm",
       price: "400K",
       period: "/ month",
+      comingSoon: true,
       features: ["Unlimited analyses", "Up to 10 team members", "Custom client branding", "API access", "Admin portal", "Dedicated account manager"],
       cta: "Upgrade to Firm",
     },
@@ -135,8 +137,89 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
         {plans.map((p) => {
           const isCurrentPlan = user.plan?.toLowerCase() === p.key;
           
+          if (p.comingSoon) {
+            return (
+              <Card
+                key={p.name}
+                style={{
+                  padding: "48px 28px",
+                  position: "relative",
+                  border: `1.5px dashed ${C.border}`,
+                  background: "rgba(15,32,68,0.01)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  textAlign: "center",
+                  minHeight: "420px",
+                  opacity: 0.8,
+                  overflow: "visible"
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 14,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: C.gold,
+                    color: C.white,
+                    fontSize: "0.68rem",
+                    fontWeight: 800,
+                    padding: "4px 16px",
+                    borderRadius: 50,
+                    whiteSpace: "nowrap",
+                    letterSpacing: "0.04em",
+                    boxShadow: "0 2px 6px rgba(200, 146, 42, 0.2)"
+                  }}
+                >
+                  COMING SOON
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
+                    color: "#9ca3af",
+                    textTransform: "uppercase",
+                    letterSpacing: ".08em",
+                    marginBottom: 16,
+                  }}
+                >
+                  {p.name}
+                </div>
+
+                <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: "50%",
+                      background: "rgba(200, 146, 42, 0.1)",
+                      color: C.gold,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "1.5rem",
+                      fontWeight: 800,
+                      marginBottom: 16,
+                    }}
+                  >
+                    ⏰
+                  </div>
+                  <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.6rem", fontWeight: 800, color: C.navy, marginBottom: 8 }}>
+                    Coming Soon
+                  </div>
+                  <p style={{ fontSize: "0.82rem", color: C.muted, maxWidth: "220px", lineHeight: "1.5", fontWeight: 500 }}>
+                    We are currently finalizing this tier to bring you advanced tax analysis tools.
+                  </p>
+                </div>
+              </Card>
+            );
+          }
+
           return (
-            <Card
+             <Card
               key={p.name}
               style={{
                 padding: "36px 28px 28px",
@@ -146,7 +229,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
                 flexDirection: "column",
                 justifyContent: "space-between",
                 transform: p.popular ? "scale(1.01)" : "none",
-                boxShadow: p.popular ? "0 12px 36px rgba(26,123,107,0.08)" : "none"
+                boxShadow: p.popular ? "0 12px 36px rgba(26,123,107,0.08)" : "none",
+                overflow: "visible",
               }}
             >
               <div>

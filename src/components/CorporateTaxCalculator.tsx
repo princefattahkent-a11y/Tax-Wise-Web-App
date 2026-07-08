@@ -176,12 +176,12 @@ const MoneyField: React.FC<MoneyFieldProps> = ({
             <AnimatePresence>
               {showTooltip && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 4 }}
+                  initial={{ opacity: 0, scale: 0.9, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 4 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -4 }}
                   style={{
                     position: "absolute",
-                    bottom: "22px",
+                    top: "22px",
                     right: 0,
                     width: "220px",
                     background: C.navy,
