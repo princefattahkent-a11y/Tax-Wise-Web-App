@@ -15,7 +15,11 @@ import {
   Shield, 
   LogOut, 
   Home, 
-  Bell 
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  X
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
@@ -48,8 +52,20 @@ export default function TaxWiseSaaS() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"landing" | "auth">("landing");
   const [isRecovering, setIsRecovering] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const intendedPageRef = useRef<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -295,18 +311,20 @@ export default function TaxWiseSaaS() {
 
   // Sidebar Nav Item Helper Component for hover states
   const SidebarNavItem = ({ item, isActive, onClick }: { item: { id: string; label: string }; isActive: boolean; onClick: () => void }) => {
+    const showCollapsed = isCollapsed && !isMobile;
     return (
       <motion.button
         onClick={onClick}
-        whileHover={{ x: isActive ? 0 : 6 }}
+        whileHover={{ x: isActive ? 0 : (showCollapsed ? 0 : 6) }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 15 }}
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 12,
+          justifyContent: showCollapsed ? "center" : "flex-start",
+          gap: showCollapsed ? 0 : 12,
           width: "100%",
-          padding: "11px 16px",
+          padding: showCollapsed ? "11px 0" : "11px 16px",
           borderRadius: 12,
           border: "none",
           background: isActive 
@@ -321,6 +339,7 @@ export default function TaxWiseSaaS() {
           fontFamily: "inherit",
           boxShadow: isActive ? "0 4px 12px rgba(26,123,107,0.3)" : "none",
         }}
+        title={showCollapsed ? item.label : undefined}
         onMouseOver={(e) => {
           if (!isActive) {
             e.currentTarget.style.background = "rgba(255,255,255,0.06)";
@@ -337,7 +356,7 @@ export default function TaxWiseSaaS() {
         <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
           {getNavItemIcon(item.id, 16)}
         </span>
-        <span>{item.label}</span>
+        {!showCollapsed && <span>{item.label}</span>}
       </motion.button>
     );
   };
@@ -368,58 +387,157 @@ export default function TaxWiseSaaS() {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', -apple-system, sans-serif", background: C.offwhite }}>
+      {/* Mobile Backdrop Overlay */}
+      {isMobile && isMobileMenuOpen && (
+        <div 
+          onClick={() => setIsMobileMenuOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 20, 36, 0.4)",
+            backdropFilter: "blur(4px)",
+            zIndex: 90,
+            animation: "fadeIn 0.2s ease-out"
+          }}
+        />
+      )}
+
       {/* SIDEBAR */}
       <div 
         className="glass-sidebar"
         style={{ 
-          width: 240, 
+          width: isMobile ? 240 : (isCollapsed ? 72 : 240), 
           display: "flex", 
           flexDirection: "column", 
-          position: "sticky", 
+          position: isMobile ? "fixed" : "sticky", 
           top: 0, 
+          bottom: isMobile ? 0 : undefined,
+          left: isMobile ? (isMobileMenuOpen ? 0 : -240) : 0,
           height: "100vh", 
           flexShrink: 0,
           boxShadow: "4px 0 24px rgba(15, 32, 68, 0.08)",
-          zIndex: 50
+          zIndex: 100,
+          transition: "width 0.3s cubic-bezier(0.16, 1, 0.3, 1), left 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        <div style={{ padding: "26px 24px 20px", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.45rem", color: "#FFFFFF", fontWeight: 800, letterSpacing: "-0.01em" }}>
-            Tax<span style={{ color: "#4DD9C0" }}>Wise</span>
-          </div>
-          <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,.35)", marginTop: 4, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-            Uganda Tax Platform
-          </div>
+        {/* Floating Toggle Button (Floating at the right edge) */}
+        {!isMobile && (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            style={{
+              position: "absolute",
+              top: 24,
+              right: -12,
+              width: 24,
+              height: 24,
+              borderRadius: "50%",
+              background: C.white,
+              border: `1.5px solid ${C.border}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(15, 32, 68, 0.1)",
+              zIndex: 110,
+              color: C.navy,
+              transition: "transform 0.2s ease"
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+          >
+            {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+          </button>
+        )}
+
+        <div style={{ 
+          padding: isCollapsed && !isMobile ? "20px 0" : "26px 24px 20px", 
+          borderBottom: "1px solid rgba(255,255,255,.05)",
+          display: "flex",
+          flexDirection: isCollapsed && !isMobile ? "column" : "row",
+          alignItems: "center",
+          justifyContent: isCollapsed && !isMobile ? "center" : "space-between"
+        }}>
+          {isCollapsed && !isMobile ? (
+            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.45rem", color: "#FFFFFF", fontWeight: 800 }}>
+              T<span style={{ color: "#4DD9C0" }}>W</span>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.45rem", color: "#FFFFFF", fontWeight: 800, letterSpacing: "-0.01em" }}>
+                  Tax<span style={{ color: "#4DD9C0" }}>Wise</span>
+                </div>
+                {!isMobile && (
+                  <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,.35)", marginTop: 4, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                    Uganda Tax Platform
+                  </div>
+                )}
+              </div>
+              {isMobile && (
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "rgba(255,255,255,0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 4
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </>
+          )}
         </div>
 
-        <nav style={{ flex: 1, padding: "20px 14px", overflowY: "auto" }}>
+        <nav style={{ flex: 1, padding: isCollapsed && !isMobile ? "20px 8px" : "20px 14px", overflowY: "auto" }}>
           {navItems.map((n) => (
             <SidebarNavItem
               key={n.id}
               item={n}
               isActive={page === n.id}
-              onClick={() => setPage(n.id)}
+              onClick={() => {
+                setPage(n.id);
+                if (isMobile) setIsMobileMenuOpen(false);
+              }}
             />
           ))}
         </nav>
 
         {/* PROFILE SECTION */}
-        <div style={{ padding: "18px 20px", borderTop: "1px solid rgba(255,255,255,.05)", background: "rgba(15, 32, 68, 0.2)" }}>
+        <div style={{ 
+          padding: isCollapsed && !isMobile ? "18px 10px" : "18px 20px", 
+          borderTop: "1px solid rgba(255,255,255,.05)", 
+          background: "rgba(15, 32, 68, 0.2)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}>
           <div 
-            onClick={() => setPage("settings")}
+            onClick={() => {
+              setPage("settings");
+              if (isMobile) setIsMobileMenuOpen(false);
+            }}
             style={{ 
               display: "flex", 
               alignItems: "center", 
-              gap: 12, 
+              justifyContent: isCollapsed && !isMobile ? "center" : "flex-start",
+              gap: isCollapsed && !isMobile ? 0 : 12, 
               marginBottom: 12,
               cursor: "pointer",
               padding: "6px 8px",
               borderRadius: "10px",
-              margin: "-6px -8px 6px",
+              margin: isCollapsed && !isMobile ? "0" : "-6px -8px 6px",
               transition: "background 0.2s ease, transform 0.15s ease",
+              width: isCollapsed && !isMobile ? "auto" : "100%",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            title={isCollapsed && !isMobile ? dbUser.full_name : undefined}
           >
             <div 
               style={{ 
@@ -433,28 +551,31 @@ export default function TaxWiseSaaS() {
                 color: "#FFFFFF", 
                 fontSize: "0.85rem", 
                 fontWeight: 700,
-                boxShadow: "0 2px 8px rgba(26,123,107,0.3)"
+                boxShadow: "0 2px 8px rgba(26,123,107,0.3)",
+                flexShrink: 0,
               }}
             >
               {getInitials(dbUser.full_name)}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {dbUser.full_name}
+            {!(isCollapsed && !isMobile) && (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {dbUser.full_name}
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,.4)", display: "flex", alignItems: "center", gap: 4 }}>
+                  <span>{dbUser.role}</span>
+                  <span>•</span>
+                  <span style={{ color: "#4DD9C0", fontWeight: 700 }}>{dbUser.plan?.toUpperCase()}</span>
+                </div>
               </div>
-              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,.4)", display: "flex", alignItems: "center", gap: 4 }}>
-                <span>{dbUser.role}</span>
-                <span>•</span>
-                <span style={{ color: "#4DD9C0", fontWeight: 700 }}>{dbUser.plan?.toUpperCase()}</span>
-              </div>
-            </div>
+            )}
           </div>
           <button
             onClick={handleSignOut}
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: isCollapsed && !isMobile ? 0 : 8,
               fontSize: "0.9rem",
               fontWeight: 700,
               color: "#FFFFFF",
@@ -463,11 +584,12 @@ export default function TaxWiseSaaS() {
               borderRadius: 14,
               cursor: "pointer",
               fontFamily: "inherit",
-              padding: "10px 16px",
+              padding: isCollapsed && !isMobile ? "10px" : "10px 16px",
               transition: "all 0.2s ease",
               width: "100%",
               justifyContent: "center",
             }}
+            title={isCollapsed && !isMobile ? "Sign Out" : undefined}
             onMouseOver={(e) => {
               e.currentTarget.style.background = "rgba(255,255,255,0.18)";
               e.currentTarget.style.color = C.red;
@@ -478,7 +600,7 @@ export default function TaxWiseSaaS() {
             }}
           >
             <LogOut size={15} />
-            <span>Sign Out</span>
+            {!(isCollapsed && !isMobile) && <span>Sign Out</span>}
           </button>
         </div>
       </div>
@@ -494,12 +616,31 @@ export default function TaxWiseSaaS() {
             display: "flex", 
             alignItems: "center", 
             justifyContent: "space-between", 
-            padding: "0 40px",
+            padding: isMobile ? "0 16px" : "0 40px",
             flexShrink: 0,
             boxShadow: "0 2px 12px rgba(15, 32, 68, 0.01)"
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.8rem", color: C.muted, fontWeight: 500 }}>
+            {isMobile && (
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: C.navy,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "6px",
+                  marginRight: "4px"
+                }}
+                title="Open menu"
+              >
+                <Menu size={20} />
+              </button>
+            )}
             <button
               onClick={handleGoHome}
               style={{
@@ -520,15 +661,15 @@ export default function TaxWiseSaaS() {
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
               <Home size={13} />
-              <span>Home</span>
+              {!isMobile && <span>Home</span>}
             </button>
             <span>TaxWise</span>
             <span style={{ fontSize: "0.6rem" }}>/</span>
             <span style={{ color: C.navy, fontWeight: 700 }}>{getPageTitle()}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontSize: "0.82rem", color: C.muted, fontWeight: 500 }}>📅 {formattedDate}</span>
-            <div style={{ width: 1, height: 20, background: C.border }} />
+            {!isMobile && <span style={{ fontSize: "0.82rem", color: C.muted, fontWeight: 500 }}>📅 {formattedDate}</span>}
+            {!isMobile && <div style={{ width: 1, height: 20, background: C.border }} />}
             <div style={{ position: "relative", display: "flex", alignItems: "center" }} title="Notifications">
               <Bell size={16} style={{ cursor: "pointer", color: C.navy }} />
               <span style={{ position: "absolute", top: -2, right: -2, width: 6, height: 6, borderRadius: "50%", background: C.red }} />
@@ -537,7 +678,7 @@ export default function TaxWiseSaaS() {
         </header>
 
         {/* PAGE CONTENT */}
-        <div ref={scrollContainerRef} style={{ flex: 1, padding: "36px 40px", overflowY: "auto" }}>
+        <div ref={scrollContainerRef} style={{ flex: 1, padding: isMobile ? "20px 16px" : "36px 40px", overflowY: "auto" }}>
           <main key={page} className="page-fade-in" style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
             {renderActivePage()}
           </main>
