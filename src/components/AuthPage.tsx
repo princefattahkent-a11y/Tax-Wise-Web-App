@@ -568,38 +568,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
     }
   };
 
-  // ── Send signup verification OTP code ──
+  // ── Create account directly and log in without OTP email verification ──
   const handleSignupRequest = async () => {
     setLoading(true); setGlobalError(""); setSuccessMsg("");
     try {
-      const response = await fetch("/api/auth/send-otp", {
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
-          type: "signup",
-          fullName: name.trim(),
+          email: email.trim(),
+          password,
+          full_name: name.trim(),
+          role,
         }),
       });
 
       const result = await response.json();
       if (!response.ok || result.error) {
-        throw new Error(result.error || "Failed to send verification email.");
+        throw new Error(result.error || "Failed to create account.");
       }
 
-      setExpectedSignupOtp(result.code);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("mock_signup_otp", result.code);
-        localStorage.setItem("mock_signup_email", email);
-      }
+      // Auto login immediately
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (signInError) throw signInError;
 
-      // Switch to verify signup screen!
-      switchMode("verify-signup");
-      if (result.warning) {
-        setSuccessMsg(`⚠️ Email delivery failed (${result.warning}). For testing, please enter code: ${result.code}`);
-      } else {
-        setSuccessMsg("✅ Verification code sent! Please check your email inbox.");
-      }
+      onLoginSuccess();
     } catch (err: unknown) {
       setGlobalError(formatAuthError(err));
     } finally {

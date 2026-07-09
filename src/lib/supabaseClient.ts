@@ -59,72 +59,46 @@ function triggerCallbacks(event: string, session: any) {
 // Mock query builder mimicking Supabase postgrest syntax
 class MockQueryBuilder {
   private tableName: string;
-  private filters: any[] = [];
+  private filters: { col: string; val: any }[] = [];
   private limitCount: number | null = null;
   private singleResult: boolean = false;
+  private actionType: "select" | "insert" | "update" | "delete" = "select";
+  private actionData: any = null;
 
   constructor(tableName: string) {
     this.tableName = tableName;
   }
 
   select(fields?: string, options?: any) {
+    this.actionType = "select";
     return this;
   }
 
   insert(data: any) {
-    if (typeof window !== "undefined") {
-      try {
-        const key = `mock_${this.tableName}`;
-        const existing = JSON.parse(localStorage.getItem(key) || "[]");
-        if (Array.isArray(data)) {
-          existing.push(...data);
-        } else {
-          existing.push(data);
-        }
-        localStorage.setItem(key, JSON.stringify(existing));
-      } catch (e) {
-        console.error("Mock insert error", e);
-      }
-    }
+    this.actionType = "insert";
+    this.actionData = data;
     return this;
   }
 
   update(data: any) {
-    if (typeof window !== "undefined") {
-      if (this.tableName === "users") {
-        try {
-          const profile = getMockProfile();
-          const updated = { ...profile, ...data };
-          localStorage.setItem("mock_profile", JSON.stringify(updated));
-        } catch (e) {}
-      } else {
-        try {
-          const key = `mock_${this.tableName}`;
-          const existing = JSON.parse(localStorage.getItem(key) || "[]");
-          // Update matching items (stub logic: update all or first one)
-          const updatedList = existing.map((item: any) => ({ ...item, ...data }));
-          localStorage.setItem(key, JSON.stringify(updatedList));
-        } catch (e) {}
-      }
-    }
+    this.actionType = "update";
+    this.actionData = data;
     return this;
   }
 
   delete() {
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(`mock_${this.tableName}`, "[]");
-      } catch (e) {}
-    }
+    this.actionType = "delete";
     return this;
   }
 
   upsert(data: any, options?: any) {
-    return this.insert(data);
+    this.actionType = "insert";
+    this.actionData = data;
+    return this;
   }
 
   eq(col: string, val: any) {
-    this.filters.push({ type: "eq", col, val });
+    this.filters.push({ col, val });
     return this;
   }
 
@@ -153,26 +127,101 @@ class MockQueryBuilder {
     if (typeof window === "undefined") {
       resultPromise = Promise.resolve({ data: this.singleResult ? null : [], error: null });
     } else {
+      const key = `mock_${this.tableName}`;
+
       if (this.tableName === "users") {
         const profile = getMockProfile();
-        if (this.singleResult) {
-          resultPromise = Promise.resolve({ data: profile, error: null });
+        if (this.actionType === "update") {
+          const updated = { ...profile, ...this.actionData };
+          localStorage.setItem("mock_profile", JSON.stringify(updated));
+          resultPromise = Promise.resolve({ data: updated, error: null });
+        } else if (this.actionType === "delete") {
+          localStorage.removeItem("mock_profile");
+          localStorage.removeItem("mock_supabase_session");
+          resultPromise = Promise.resolve({ data: null, error: null });
         } else {
-          resultPromise = Promise.resolve({ data: [profile], error: null });
+          if (this.singleResult) {
+            resultPromise = Promise.resolve({ data: profile, error: null });
+          } else {
+            resultPromise = Promise.resolve({ data: [profile], error: null });
+          }
         }
       } else if (this.tableName === "site_settings") {
-        resultPromise = Promise.resolve({ data: [], error: null });
+        if (this.actionType === "insert" || this.actionType === "update") {
+          const data = JSON.parse(localStorage.getItem(key) || "[]");
+          const inputRows = Array.isArray(this.actionData) ? this.actionData : [this.actionData];
+          inputRows.forEach((row: any) => {
+            const idx = data.findIndex((item: any) => item.key === row.key);
+            if (idx > -1) {
+              data[idx] = { ...data[idx], ...row };
+            } else {
+              data.push(row);
+            }
+          });
+          localStorage.setItem(key, JSON.stringify(data));
+          resultPromise = Promise.resolve({ data: inputRows, error: null });
+        } else {
+          resultPromise = Promise.resolve({ data: [], error: null });
+        }
       } else {
         try {
-          const key = `mock_${this.tableName}`;
-          let data = JSON.parse(localStorage.getItem(key) || "[]");
-          if (this.limitCount !== null) {
-            data = data.slice(0, this.limitCount);
-          }
-          if (this.singleResult) {
-            resultPromise = Promise.resolve({ data: data[0] || null, error: null });
+          const data = JSON.parse(localStorage.getItem(key) || "[]");
+
+          const matchesFilters = (item: any) => {
+            return this.filters.every(f => {
+              const itemVal = item[f.col];
+              if (itemVal === undefined) return false;
+              return String(itemVal) === String(f.val);
+            });
+          };
+
+          if (this.actionType === "insert") {
+            const itemsToInsert = Array.isArray(this.actionData)
+              ? this.actionData.map((item: any) => ({ id: item.id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2)), created_at: new Date().toISOString(), ...item }))
+              : [{ id: this.actionData.id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2)), created_at: new Date().toISOString(), ...this.actionData }];
+            
+            data.push(...itemsToInsert);
+            localStorage.setItem(key, JSON.stringify(data));
+            resultPromise = Promise.resolve({ data: itemsToInsert, error: null });
+
+          } else if (this.actionType === "update") {
+            const updatedItems: any[] = [];
+            const updatedData = data.map((item: any) => {
+              if (this.filters.length === 0 || matchesFilters(item)) {
+                const updatedItem = { ...item, ...this.actionData };
+                updatedItems.push(updatedItem);
+                return updatedItem;
+              }
+              return item;
+            });
+            localStorage.setItem(key, JSON.stringify(updatedData));
+            resultPromise = Promise.resolve({ data: updatedItems, error: null });
+
+          } else if (this.actionType === "delete") {
+            const deletedItems: any[] = [];
+            const remainingData = data.filter((item: any) => {
+              if (this.filters.length === 0 || matchesFilters(item)) {
+                deletedItems.push(item);
+                return false;
+              }
+              return true;
+            });
+            localStorage.setItem(key, JSON.stringify(remainingData));
+            resultPromise = Promise.resolve({ data: deletedItems, error: null });
+
           } else {
-            resultPromise = Promise.resolve({ data: data, error: null, count: data.length });
+            let filteredData = data;
+            if (this.filters.length > 0) {
+              filteredData = data.filter(matchesFilters);
+            }
+            if (this.limitCount !== null) {
+              filteredData = filteredData.slice(0, this.limitCount);
+            }
+            if (this.singleResult) {
+              resultPromise = Promise.resolve({ data: filteredData[0] || null, error: null });
+            } else {
+              resultPromise = Promise.resolve({ data: filteredData, error: null, count: filteredData.length });
+            }
           }
         } catch (e) {
           resultPromise = Promise.resolve({ data: this.singleResult ? null : [], error: null });

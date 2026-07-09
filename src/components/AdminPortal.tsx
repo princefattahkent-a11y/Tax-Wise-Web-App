@@ -335,6 +335,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
   const [pdfFileName, setPdfFileName] = useState("");
   const pdfInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Precedents deduplication states
+  const [duplicateGroups, setDuplicateGroups] = useState<{ caseNumber: string; cases: Precedent[] }[]>([]);
+  const [isScanPerformed, setIsScanPerformed] = useState(false);
+  const [showCleanupModal, setShowCleanupModal] = useState(false);
+  const [cleanupStatus, setCleanupStatus] = useState("");
+
   // Courses management states
   const [editCourse, setEditCourse] = useState<Course | null>(null);
   const [isNewCourse, setIsNewCourse] = useState(false);
@@ -566,6 +572,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
       // Auto-populate form fields from AI extraction
       const ex = data.extracted;
       if (ex) {
+        const extractedCaseNumber = ex.case_number?.trim() || "";
+        if (extractedCaseNumber) {
+          const alreadyExists = precedents.some(p => p.case_number.trim().toLowerCase() === extractedCaseNumber.toLowerCase());
+          if (alreadyExists) {
+            setPdfUploadError(`Warning: A case with Case Number "${extractedCaseNumber}" already exists in the library. Saving this directly will result in a duplicate error.`);
+          }
+        }
         if (ex.case_number) setPrecCaseNumber(ex.case_number);
         if (ex.title) setPrecTitle(ex.title);
         if (ex.year) setPrecYear(Number(ex.year));
@@ -588,26 +601,48 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
     setActionLoading(true);
     setActionError("");
     try {
+      const trimmedCaseNumber = precCaseNumber.trim();
+      if (!trimmedCaseNumber) {
+        throw new Error("Case Number is required.");
+      }
+      const trimmedTitle = precTitle.trim();
+      if (!trimmedTitle) {
+        throw new Error("Case Title is required.");
+      }
+
+      // Check for already existing case number
+      if (isNewPrecedent) {
+        const exists = precedents.some(p => p.case_number.trim().toLowerCase() === trimmedCaseNumber.toLowerCase());
+        if (exists) {
+          throw new Error(`A case with Case Number "${trimmedCaseNumber}" already exists in the library.`);
+        }
+      } else if (editPrecedent) {
+        const exists = precedents.some(p => p.id !== editPrecedent.id && p.case_number.trim().toLowerCase() === trimmedCaseNumber.toLowerCase());
+        if (exists) {
+          throw new Error(`Another case with Case Number "${trimmedCaseNumber}" already exists in the library.`);
+        }
+      }
+
       const payload = {
-        case_number: precCaseNumber,
-        title: precTitle,
+        case_number: trimmedCaseNumber,
+        title: trimmedTitle,
         year: Number(precYear),
         tax_type: precTaxType,
         outcome: precOutcome,
-        summary: precSummary,
-        full_text: precFullText || null,
-        ai_commentary: precAiCommentary || null,
+        summary: precSummary.trim(),
+        full_text: precFullText?.trim() || null,
+        ai_commentary: precAiCommentary?.trim() || null,
       };
 
       if (isNewPrecedent) {
         const { data, error } = await supabase.from("tat_cases").insert([payload]).select();
         if (error) throw error;
-        await logAdminAction("precedent_created", currentAdminId, { case_number: precCaseNumber });
+        await logAdminAction("precedent_created", currentAdminId, { case_number: trimmedCaseNumber });
         if (data) setPrecedents(prev => [data[0] as Precedent, ...prev]);
       } else if (editPrecedent) {
         const { data, error } = await supabase.from("tat_cases").update(payload).eq("id", editPrecedent.id).select();
         if (error) throw error;
-        await logAdminAction("precedent_updated", currentAdminId, { precedent_id: editPrecedent.id, case_number: precCaseNumber });
+        await logAdminAction("precedent_updated", currentAdminId, { precedent_id: editPrecedent.id, case_number: trimmedCaseNumber });
         if (data) setPrecedents(prev => prev.map(p => p.id === editPrecedent.id ? (data[0] as Precedent) : p));
       }
       setEditPrecedent(null);
@@ -630,6 +665,72 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
       setDeletePrecedent(null);
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : "Failed to delete precedent.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ── Precedent Deduplication Utility
+  const scanForDuplicates = () => {
+    const groups: Record<string, Precedent[]> = {};
+    precedents.forEach(p => {
+      const key = p.case_number.trim().toLowerCase();
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(p);
+    });
+
+    const dupes = Object.entries(groups)
+      .filter(([_, cases]) => cases.length > 1)
+      .map(([_, cases]) => ({
+        caseNumber: cases[0].case_number, // keep original casing
+        cases,
+      }));
+
+    setDuplicateGroups(dupes);
+    setIsScanPerformed(true);
+    setShowCleanupModal(true);
+    setCleanupStatus("");
+  };
+
+  const handleCleanDuplicates = async () => {
+    if (duplicateGroups.length === 0) return;
+    setActionLoading(true);
+    setCleanupStatus("Beginning deduplication process...");
+    let deletedCount = 0;
+    try {
+      for (const group of duplicateGroups) {
+        // Sort to keep the most complete record
+        const sorted = [...group.cases].sort((a, b) => {
+          const scoreA = (a.full_text ? 2 : 0) + (a.ai_commentary ? 1 : 0);
+          const scoreB = (b.full_text ? 2 : 0) + (b.ai_commentary ? 1 : 0);
+          if (scoreA !== scoreB) {
+            return scoreB - scoreA; // descending order (higher score first)
+          }
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        });
+
+        const toDelete = sorted.slice(1);
+
+        for (const item of toDelete) {
+          setCleanupStatus(`Deleting duplicate of "${group.caseNumber}" (ID: ${item.id.slice(0, 8)})...`);
+          const { error } = await supabase.from("tat_cases").delete().eq("id", item.id);
+          if (error) {
+            console.error(`Failed to delete item ${item.id}:`, error);
+          } else {
+            deletedCount++;
+          }
+        }
+      }
+
+      setCleanupStatus(`Deduplication complete! Successfully deleted ${deletedCount} duplicate records.`);
+      await logAdminAction("precedents_deduplicated", currentAdminId, { deleted_count: deletedCount });
+      
+      await fetchData();
+      setDuplicateGroups([]);
+    } catch (e: unknown) {
+      setCleanupStatus(e instanceof Error ? `Error: ${e.message}` : "An error occurred during cleanup.");
     } finally {
       setActionLoading(false);
     }
@@ -714,26 +815,31 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
   const renderTatPrecedents = () => {
     return (
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
           {sectionTitle("⚖️", "TAT Case Precedents", "Manage Uganda's Tax Appeals Tribunal precedent library.")}
-          <Button variant="primary" onClick={() => {
-            setIsNewPrecedent(true);
-            setPrecCaseNumber("");
-            setPrecTitle("");
-            setPrecYear(new Date().getFullYear());
-            setPrecTaxType("VAT");
-            setPrecOutcome("Allowed");
-            setPrecSummary("");
-            setPrecFullText("");
-            setPrecAiCommentary("");
-            setPrecPdfPath(null);
-            setPdfFileName("");
-            setPdfUploadError("");
-            setActionError("");
-            setEditPrecedent({} as Precedent);
-          }}>
-            ➕ Add Precedent
-          </Button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Button variant="outline" onClick={scanForDuplicates}>
+              🔍 Scan for Duplicates
+            </Button>
+            <Button variant="primary" onClick={() => {
+              setIsNewPrecedent(true);
+              setPrecCaseNumber("");
+              setPrecTitle("");
+              setPrecYear(new Date().getFullYear());
+              setPrecTaxType("VAT");
+              setPrecOutcome("Allowed");
+              setPrecSummary("");
+              setPrecFullText("");
+              setPrecAiCommentary("");
+              setPrecPdfPath(null);
+              setPdfFileName("");
+              setPdfUploadError("");
+              setActionError("");
+              setEditPrecedent({} as Precedent);
+            }}>
+              ➕ Add Precedent
+            </Button>
+          </div>
         </div>
 
         <Card style={{ padding: 0, overflow: "hidden" }}>
@@ -1815,6 +1921,71 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <Button variant="ghost" small onClick={() => setEditLesson(null)}>Cancel</Button>
           <Button variant="primary" small onClick={handleLessonSave}>Save Lesson</Button>
+        </div>
+      </Modal>
+
+      {/* Precedent Deduplication Cleanup Modal */}
+      <Modal open={showCleanupModal} onClose={() => { if (!actionLoading) setShowCleanupModal(false); }} title="⚖️ Precedent Library Deduplication" width={640}>
+        <div style={{ marginBottom: 16 }}>
+          {isScanPerformed && duplicateGroups.length === 0 && (
+            <div style={{ textAlign: "center", padding: "20px 10px" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>✨</div>
+              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: C.teal, marginBottom: 8 }}>Pristine Case Library!</h4>
+              <p style={{ fontSize: "0.84rem", color: C.muted, lineHeight: 1.5, maxWidth: 380, margin: "0 auto 20px" }}>
+                No duplicate cases or repeating case numbers were found. All records in your tax precedent database are unique.
+              </p>
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <Button variant="primary" small onClick={() => setShowCleanupModal(false)}>Great, Thanks!</Button>
+              </div>
+            </div>
+          )}
+
+          {duplicateGroups.length > 0 && (
+            <div>
+              <p style={{ fontSize: "0.85rem", color: C.text, lineHeight: 1.5, marginBottom: 14 }}>
+                The library scanner detected <strong>{duplicateGroups.length}</strong> unique Case Number(s) with redundant duplicate entries in the database:
+              </p>
+
+              <div style={{ maxHeight: 240, overflowY: "auto", border: `1px solid ${C.border}`, borderRadius: 10, padding: 12, background: C.white, marginBottom: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                {duplicateGroups.map((g, idx) => (
+                  <div key={idx} style={{ padding: 10, borderRadius: 8, background: "rgba(15,32,68,0.02)", borderLeft: `3px solid ${C.red}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                      <span style={{ fontSize: "0.84rem", fontWeight: 700, color: C.navy }}>{g.caseNumber}</span>
+                      <span style={{ fontSize: "0.72rem", background: "#FEE2E2", color: C.red, fontWeight: 700, padding: "2px 8px", borderRadius: 12 }}>
+                        {g.cases.length} duplicates
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "0.76rem", color: C.muted, display: "flex", flexWrap: "wrap", gap: "8px 16px" }}>
+                      <span>📂 Tax: <strong>{g.cases[0].tax_type}</strong></span>
+                      <span>📅 Year: <strong>{g.cases[0].year}</strong></span>
+                      <span style={{ flexBasis: "100%", marginTop: 2, fontStyle: "italic", color: C.text }}>
+                        &ldquo;{g.cases[0].title}&rdquo;
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ background: "#FFF9DB", border: `1.5px solid ${C.gold}`, borderRadius: 8, padding: "12px 14px", fontSize: "0.78rem", color: "#825D00", lineHeight: 1.45, marginBottom: 16 }}>
+                💡 <strong>Deduplication Intelligence:</strong> Merging will preserve the most complete entry (prioritizing records with full court rulings or AI analysis commentary) and permanently purge redundant duplicates from the database.
+              </div>
+
+              {cleanupStatus && (
+                <div style={{ background: C.navy, color: "#92B8FF", padding: "10px 14px", borderRadius: 8, fontFamily: "var(--font-mono, monospace)", fontSize: "0.74rem", whiteSpace: "pre-wrap", border: "1px solid rgba(255,255,255,0.1)", marginBottom: 16, maxHeight: 100, overflowY: "auto" }}>
+                  ⚙️ {cleanupStatus}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <Button variant="ghost" small onClick={() => setShowCleanupModal(false)} disabled={actionLoading}>
+                  Close
+                </Button>
+                <Button variant="danger" small onClick={handleCleanDuplicates} disabled={actionLoading}>
+                  {actionLoading ? "Merging…" : "🧼 Clean & Merge Duplicates"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>
