@@ -37,10 +37,10 @@ function getPasswordStrength(pw: string): { score: 0 | 1 | 2 | 3 | 4; label: str
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   const map: Record<number, { label: string; color: string }> = {
     0: { label: "Too short", color: C.red },
-    1: { label: "Weak",      color: C.red },
-    2: { label: "Fair",      color: C.gold },
-    3: { label: "Good",      color: "#2563EB" },
-    4: { label: "Strong",    color: C.green },
+    1: { label: "Weak", color: C.red },
+    2: { label: "Fair", color: C.gold },
+    3: { label: "Good", color: "#2563EB" },
+    4: { label: "Strong", color: C.green },
   };
   return { score: score as 0 | 1 | 2 | 3 | 4, ...map[score] };
 }
@@ -88,7 +88,7 @@ interface OtpInputProps {
 
 const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, error, length = 6, alphanumeric = false }) => {
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
-  
+
   const cleanValue = useCallback((val: string) => {
     return alphanumeric ? val.replace(/[^a-zA-Z0-9]/g, "") : val.replace(/\D/g, "");
   }, [alphanumeric]);
@@ -1237,7 +1237,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
                 </div>
 
                 {/* Tab Switcher */}
-                <div style={{ display: "flex", marginBottom: 22, background: "#EAE9E5", borderRadius: 10, padding: 4 }}>
+                <div style={{ display: "flex", marginBottom: 22, background: "#060a10", borderRadius: 10, padding: 4 }}>
                   {(["login", "signup"] as const).map((m) => (
                     <button
                       key={m}
