@@ -90,8 +90,9 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
       fetchPastReports(); // Refresh history
     } catch (err: unknown) {
       console.error("Compliance report generation error:", err);
+      const message = err instanceof Error ? err.message : String(err);
       setAiReport(
-        "Failed to generate audit report. Please verify your internet connection and verify that you have added your Anthropic API Key in `.env.local`."
+        `Failed to generate audit report. ${message}. Please verify that GEMINI_API_KEY is configured in your deployment environment.`
       );
     } finally {
       setAiLoading(false);
