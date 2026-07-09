@@ -205,19 +205,15 @@ export const EducationHub: React.FC<EducationHubProps> = ({ user }) => {
         }),
       });
 
-      const data = await res.json().catch(() => ({ error: `Unexpected response from AI tutor (${res.status})` }));
-      if (!res.ok) {
-        throw new Error(data.error || `AI tutor endpoint failed with status ${res.status}`);
-      }
+      if (!res.ok) throw new Error("AI tutor endpoint failed");
+      const data = await res.json();
+      
       if (data.error) throw new Error(data.error);
 
       setAiAnswer(data.answer);
     } catch (err: unknown) {
       console.error("AI Tutor call error:", err);
-      const message = err instanceof Error ? err.message : String(err);
-      setAiAnswer(
-        `Tutor is currently offline. ${message}. Please check that GEMINI_API_KEY is configured in your deployment environment.`
-      );
+      setAiAnswer("Tutor is currently offline. Please check that you have added your Anthropic API Key in `.env.local`.");
     } finally {
       setAiLoading(false);
     }
