@@ -211,7 +211,7 @@ const MoneyField: React.FC<MoneyFieldProps> = ({
             left: 12,
             top: "50%",
             transform: "translateY(-50%)",
-            fontFamily: "monospace",
+            fontFamily: "inherit",
             fontSize: "12px",
             color: isFocused ? C.gold : C.muted,
             fontWeight: 700,
@@ -230,7 +230,7 @@ const MoneyField: React.FC<MoneyFieldProps> = ({
           style={{
             width: "100%",
             padding: "10px 12px 10px 44px",
-            fontFamily: "monospace",
+            fontFamily: "inherit",
             fontSize: "13.5px",
             fontWeight: 600,
             border: `1.5px solid ${isFocused ? C.gold : disabled ? C.border : "#D1D5DB"}`,
@@ -364,7 +364,7 @@ export const CorporateTaxCalculator: React.FC = () => {
           <span style={{ fontSize: "11px", fontWeight: 800, color: C.gold, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             Calculator View
           </span>
-          <div style={{ display: "inline-flex", background: "#E5E7EB", borderRadius: 10, padding: 3, position: "relative" }}>
+          <div style={{ display: "inline-flex", background: "#060a10", borderRadius: 10, padding: 3, position: "relative" }}>
             <button
               onClick={() => setMode("simple")}
               style={{
@@ -765,14 +765,14 @@ export const CorporateTaxCalculator: React.FC = () => {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 180px", textAlign: "center", padding: "10px", background: C.white, borderRadius: 10, border: `1px solid ${C.border}` }}>
             <span style={{ fontSize: "10px", fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Book Profit</span>
-            <div style={{ fontSize: "13px", fontWeight: 800, color: C.navy, marginTop: 4, fontFamily: "monospace" }}>{formatUGX(netProfit)}</div>
+            <div style={{ fontSize: "13px", fontWeight: 800, color: C.navy, marginTop: 4, fontFamily: "inherit" }}>{formatUGX(netProfit)}</div>
           </div>
 
           <ArrowRight size={14} style={{ color: C.muted, opacity: 0.5 }} />
 
           <div style={{ flex: "1 1 180px", textAlign: "center", padding: "10px", background: `${C.gold}08`, borderRadius: 10, border: `1px solid ${C.gold}20` }}>
             <span style={{ fontSize: "10px", fontWeight: 700, color: C.gold, textTransform: "uppercase" }}>Adjustments (Net)</span>
-            <div style={{ fontSize: "13px", fontWeight: 800, color: C.gold, marginTop: 4, fontFamily: "monospace" }}>
+            <div style={{ fontSize: "13px", fontWeight: 800, color: C.gold, marginTop: 4, fontFamily: "inherit" }}>
               {result.totalAddBacks - result.totalDeductions >= 0 ? "+" : ""}{formatUGX(result.totalAddBacks - result.totalDeductions)}
             </div>
           </div>
@@ -781,7 +781,7 @@ export const CorporateTaxCalculator: React.FC = () => {
 
           <div style={{ flex: "1 1 180px", textAlign: "center", padding: "10px", background: C.white, borderRadius: 10, border: `1px solid ${C.border}` }}>
             <span style={{ fontSize: "10px", fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Adjusted Income</span>
-            <div style={{ fontSize: "13px", fontWeight: 800, color: C.navy, marginTop: 4, fontFamily: "monospace" }}>{formatUGX(result.adjustedProfit)}</div>
+            <div style={{ fontSize: "13px", fontWeight: 800, color: C.navy, marginTop: 4, fontFamily: "inherit" }}>{formatUGX(result.adjustedProfit)}</div>
           </div>
 
           {bfLoss > 0 && (
@@ -789,7 +789,7 @@ export const CorporateTaxCalculator: React.FC = () => {
               <ArrowRight size={14} style={{ color: C.muted, opacity: 0.5 }} />
               <div style={{ flex: "1 1 180px", textAlign: "center", padding: "10px", background: `${C.teal}08`, borderRadius: 10, border: `1px solid ${C.teal}20` }}>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: C.teal, textTransform: "uppercase" }}>Loss Relief Used</span>
-                <div style={{ fontSize: "13px", fontWeight: 800, color: C.teal, marginTop: 4, fontFamily: "monospace" }}>-{formatUGX(result.lossReliefUsed)}</div>
+                <div style={{ fontSize: "13px", fontWeight: 800, color: C.teal, marginTop: 4, fontFamily: "inherit" }}>-{formatUGX(result.lossReliefUsed)}</div>
               </div>
             </>
           )}
@@ -798,7 +798,7 @@ export const CorporateTaxCalculator: React.FC = () => {
 
           <div style={{ flex: "1 1 180px", textAlign: "center", padding: "10px", background: `${C.navy}08`, borderRadius: 10, border: `1px solid ${C.navy}20` }}>
             <span style={{ fontSize: "10px", fontWeight: 700, color: C.navy, textTransform: "uppercase" }}>Chargeable</span>
-            <div style={{ fontSize: "13px", fontWeight: 800, color: C.navy, marginTop: 4, fontFamily: "monospace" }}>{formatUGX(result.chargeableBusinessIncome)}</div>
+            <div style={{ fontSize: "13px", fontWeight: 800, color: C.navy, marginTop: 4, fontFamily: "inherit" }}>{formatUGX(result.chargeableBusinessIncome)}</div>
           </div>
         </div>
       </motion.div>
@@ -829,7 +829,7 @@ export const CorporateTaxCalculator: React.FC = () => {
                 <div style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: C.muted, letterSpacing: "0.05em", marginBottom: 6 }}>
                   Chargeable Business Income
                 </div>
-                <div style={{ fontFamily: "monospace", fontSize: "19px", fontWeight: 900, color: C.navy }}>
+                <div style={{ fontFamily: "inherit", fontSize: "19px", fontWeight: 900, color: C.navy }}>
                   {formatUGX(result.chargeableBusinessIncome)}
                 </div>
               </div>
@@ -858,7 +858,7 @@ export const CorporateTaxCalculator: React.FC = () => {
                 <div style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: C.gold, letterSpacing: "0.05em", marginBottom: 6 }}>
                   Income Tax Liability
                 </div>
-                <div style={{ fontFamily: "monospace", fontSize: "19px", fontWeight: 900, color: C.gold }}>
+                <div style={{ fontFamily: "inherit", fontSize: "19px", fontWeight: 900, color: C.gold }}>
                   {formatUGX(result.incomeTax)}
                 </div>
               </div>
@@ -887,7 +887,7 @@ export const CorporateTaxCalculator: React.FC = () => {
                 <div style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: C.teal, letterSpacing: "0.05em", marginBottom: 6 }}>
                   Total Obligations Due
                 </div>
-                <div style={{ fontFamily: "monospace", fontSize: "19px", fontWeight: 900, color: C.teal }}>
+                <div style={{ fontFamily: "inherit", fontSize: "19px", fontWeight: 900, color: C.teal }}>
                   {formatUGX(result.totalTaxPayable)}
                 </div>
               </div>
@@ -929,7 +929,7 @@ export const CorporateTaxCalculator: React.FC = () => {
                     style={{
                       padding: "12px 16px",
                       textAlign: "right",
-                      fontFamily: "monospace",
+                      fontFamily: "inherit",
                       fontWeight: 700,
                       color: row.danger ? C.red : row.highlight ? C.gold : C.navy,
                     }}
