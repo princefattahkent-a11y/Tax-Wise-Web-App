@@ -31,6 +31,7 @@ import { AdminPortal } from "../components/AdminPortal";
 import { ProfileSettings } from "../components/ProfileSettings";
 import { CalculatorsPortal } from "../components/CalculatorsPortal";
 import { IntelligencePortal } from "../components/IntelligencePortal";
+import { AiFAB } from "../components/AiFAB";
 
 interface DbProfile {
   id: string;
@@ -311,7 +312,7 @@ export default function TaxWiseSaaS() {
           background: isActive 
             ? `linear-gradient(135deg, ${C.teal} 0%, ${C.tealDark} 100%)` 
             : "transparent",
-          color: isActive ? C.white : "rgba(255,255,255,0.55)",
+          color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.55)",
           fontWeight: isActive ? 700 : 500,
           fontSize: "0.875rem",
           cursor: "pointer",
@@ -383,7 +384,7 @@ export default function TaxWiseSaaS() {
         }}
       >
         <div style={{ padding: "26px 24px 20px", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.45rem", color: C.white, fontWeight: 800, letterSpacing: "-0.01em" }}>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.45rem", color: "#FFFFFF", fontWeight: 800, letterSpacing: "-0.01em" }}>
             Tax<span style={{ color: "#4DD9C0" }}>Wise</span>
           </div>
           <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,.35)", marginTop: 4, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
@@ -429,7 +430,7 @@ export default function TaxWiseSaaS() {
                 display: "flex", 
                 alignItems: "center", 
                 justifyContent: "center", 
-                color: C.white, 
+                color: "#FFFFFF", 
                 fontSize: "0.85rem", 
                 fontWeight: 700,
                 boxShadow: "0 2px 8px rgba(26,123,107,0.3)"
@@ -438,7 +439,7 @@ export default function TaxWiseSaaS() {
               {getInitials(dbUser.full_name)}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: C.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {dbUser.full_name}
               </div>
               <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,.4)", display: "flex", alignItems: "center", gap: 4 }}>
@@ -456,7 +457,7 @@ export default function TaxWiseSaaS() {
               gap: 8,
               fontSize: "0.9rem",
               fontWeight: 700,
-              color: C.white,
+              color: "#FFFFFF",
               background: "rgba(255,255,255,0.08)",
               border: "1px solid rgba(255,255,255,0.18)",
               borderRadius: 14,
@@ -473,7 +474,7 @@ export default function TaxWiseSaaS() {
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-              e.currentTarget.style.color = C.white;
+              e.currentTarget.style.color = "#FFFFFF";
             }}
           >
             <LogOut size={15} />
@@ -542,6 +543,7 @@ export default function TaxWiseSaaS() {
           </main>
         </div>
       </div>
+      <AiFAB currentPage={page} dbUser={dbUser} />
     </div>
   );
 }

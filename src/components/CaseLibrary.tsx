@@ -200,7 +200,7 @@ export const CaseLibrary: React.FC = () => {
                   >
                     {c.outcome}
                   </Badge>
-                  <Badge color={C.navy} bg="#E8EDF5" style={{ fontWeight: 800 }}>
+                  <Badge color={C.navy} bg="var(--color-badge-bg)" style={{ fontWeight: 800 }}>
                     {c.tax_type}
                   </Badge>
                 </div>
@@ -236,7 +236,7 @@ export const CaseLibrary: React.FC = () => {
                 >
                   {selected.outcome}
                 </Badge>
-                <Badge color={C.navy} bg="#E8EDF5" style={{ fontWeight: 800 }}>
+                <Badge color={C.navy} bg="var(--color-badge-bg)" style={{ fontWeight: 800 }}>
                   {selected.tax_type}
                 </Badge>
                 <Badge color={C.muted} bg={C.offwhite} style={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 4 }}>

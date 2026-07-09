@@ -68,7 +68,14 @@ JSON format:
   "riskNote": "one sentence on key risk",
   "tags": ["tag1", "tag2", "tag3"],
   "advice": "2-3 sentences of practical advice for the taxpayer or professional",
-  "applicableLaw": ["Act Section 1", "Act Section 2"]
+  "applicableLaw": ["Act Section 1", "Act Section 2"],
+  "libraryCase": {
+    "case_number": "Generate a realistic unique Ugandan Tax Appeals Tribunal (TAT) case number matching the year of the dispute, e.g., 'TAT No. 125 of 2026'. Ensure it is highly realistic and unique.",
+    "title": "Generate a realistic formal legal case title matching the context, e.g., 'Appellant Name vs Commissioner General, Uganda Revenue Authority'",
+    "year": 2026,
+    "tax_type": "The main tax category, e.g., 'VAT', 'Income Tax', 'PAYE', 'eFRIS Compliance', 'Customs Duty'",
+    "outcome": "Allowed" | "Dismissed" | "Partial"
+  }
 }`;
 
     const userMessage = `Case Type: ${caseType}\n\nCase Text/Details:\n${textToAnalyze}`;
@@ -100,6 +107,13 @@ JSON format:
       tags?: string[];
       advice?: string;
       applicableLaw?: string[];
+      libraryCase?: {
+        case_number?: string;
+        title?: string;
+        year?: number;
+        tax_type?: string;
+        outcome?: string;
+      };
     }
 
     let parsedResult: ExtractedAnalysis;
@@ -136,6 +150,54 @@ JSON format:
       } else {
         insertedCase = data;
       }
+
+      // Check if this is a new case (not loaded from existing Case Library)
+      const isAlreadyInLibrary = textToAnalyze.includes("[Case Library:") || textToAnalyze.includes("[Case Library ");
+      if (!isAlreadyInLibrary) {
+        try {
+          const libInfo = parsedResult.libraryCase || {};
+          const yearVal = Number(libInfo.year) || new Date().getFullYear();
+          let proposedNum = libInfo.case_number || `TAT No. ${Math.floor(100 + Math.random() * 900)} of ${yearVal}`;
+          
+          // Verify unique case number in tat_cases
+          const { data: duplicate } = await supabaseAdmin
+            .from("tat_cases")
+            .select("id")
+            .eq("case_number", proposedNum)
+            .maybeSingle();
+
+          if (duplicate) {
+            proposedNum = `${proposedNum} (${Math.random().toString(36).substring(2, 6).toUpperCase()})`;
+          }
+
+          const mappedOutcome = ["Allowed", "Dismissed", "Partial"].includes(libInfo.outcome || "")
+            ? libInfo.outcome
+            : (parsedResult.risk === "high" ? "Dismissed" : parsedResult.risk === "medium" ? "Partial" : "Allowed");
+
+          const taxTypeVal = libInfo.tax_type || (caseType === "TAT Ruling" ? "Income Tax" : caseType);
+
+          const { error: libInsertError } = await supabaseAdmin
+            .from("tat_cases")
+            .insert({
+              case_number: proposedNum,
+              title: libInfo.title || title,
+              year: yearVal,
+              tax_type: taxTypeVal,
+              outcome: mappedOutcome,
+              summary: parsedResult.summary || "Case analyzed by TaxWise user.",
+              full_text: textToAnalyze,
+              ai_commentary: parsedResult.advice || "AI professional advice provided."
+            });
+
+          if (libInsertError) {
+            console.error("Failed to auto-insert new case into tat_cases library:", libInsertError);
+          } else {
+            console.log("Successfully auto-inserted new analyzed case into tat_cases library:", proposedNum);
+          }
+        } catch (libErr) {
+          console.error("Error running auto-insertion logic for Case Library:", libErr);
+        }
+      }
     } else {
       console.log("Skipping Supabase insert in Demo / Sandbox mode.");
       // Create a mock returned case record to satisfy frontend expectations if needed
@@ -143,7 +205,7 @@ JSON format:
         id: `mock-case-${Date.now()}`,
         user_id: userId,
         title,
-        input_text: textToAnalyze.slice(0, 1000),
+        input_text: textToAnalyze.slice(0, 100),
         pdf_path: file ? `pdfs/${userId}/${Date.now()}_${file.name}` : null,
         ai_summary: parsedResult,
         risk_level: parsedResult.risk || "medium",

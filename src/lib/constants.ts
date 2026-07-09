@@ -1,21 +1,21 @@
 // DESIGN TOKENS
 export const C = {
-  navy: "#0F2044", 
-  navyLight: "#1a3260",
-  teal: "#1A7B6B", 
-  tealLight: "#E6F5F2", 
-  tealDark: "#155f52",
-  gold: "#C8922A", 
-  goldLight: "#FEF3CD",
-  white: "#FFFFFF", 
-  offwhite: "#F8F7F4",
-  border: "#E5E7EB", 
-  muted: "#6B7280", 
-  text: "#1C1C1E",
-  red: "#DC2626", 
-  redLight: "#FEE2E2",
-  green: "#16A34A", 
-  greenLight: "#DCFCE7",
+  navy: "var(--color-navy)", 
+  navyLight: "var(--color-navy-light)",
+  teal: "var(--color-teal)", 
+  tealLight: "var(--color-teal-light)", 
+  tealDark: "var(--color-teal-dark)",
+  gold: "var(--color-gold)", 
+  goldLight: "var(--color-gold-light)",
+  white: "var(--color-white)", 
+  offwhite: "var(--color-offwhite)",
+  border: "var(--color-border)", 
+  muted: "var(--color-muted)", 
+  text: "var(--color-text)",
+  red: "var(--color-red)", 
+  redLight: "var(--color-red-light)",
+  green: "var(--color-green)", 
+  greenLight: "var(--color-green-light)",
 };
 
 export const riskColors: Record<string, [string, string]> = {
@@ -27,7 +27,7 @@ export const riskColors: Record<string, [string, string]> = {
 export const levelColors: Record<string, [string, string]> = {
   Beginner: [C.teal, C.tealLight],
   Intermediate: [C.gold, C.goldLight],
-  Professional: [C.navy, "#E8EDF5"],
+  Professional: ["var(--color-prof-text)", "var(--color-prof-bg)"],
 };
 
 export interface ComplianceItem {

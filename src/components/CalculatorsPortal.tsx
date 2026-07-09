@@ -7,6 +7,7 @@ import { Card } from "./UI";
 import { supabase } from "../lib/supabaseClient";
 import { CorporateTaxCalculator } from "./CorporateTaxCalculator";
 import { PayeCalculator } from "./PayeCalculator";
+import { calculatePaye } from "../lib/tax/paye";
 
 interface CalculatorTab {
   id: string;
@@ -135,13 +136,25 @@ export const CalculatorsPortal: React.FC = () => {
   const result = useMemo(() => {
     const inputValue = values[activeCalculator.id] ?? activeCalculator.inputValue;
     switch (activeCalculator.id) {
-      case "paye":
+      case "paye": {
+        const payeResult = calculatePaye({
+          mode: "simple",
+          isResident: true,
+          employmentType: "primary",
+          grossSalary: inputValue,
+          nssfEnabled: true,
+          basicSalary: 0,
+          allowances: 0,
+          benefitsInKind: 0,
+          allowableDeductions: 0,
+        });
         return {
           label: "Estimated PAYE",
-          value: Math.max(0, Math.round(inputValue * (rates.paye / 100))),
-          rate: `${rates.paye}%`,
-          note: "Standard employee tax from gross monthly salary.",
+          value: payeResult.taxAmount + payeResult.surtaxAmount,
+          rate: `${Math.round(payeResult.effectiveTaxRate)}% (Eff.)`,
+          note: "Progressive PAYE based on resident bands (and 5% employee NSSF deduction).",
         };
+      }
       case "vat":
         return {
           label: "Estimated VAT",
@@ -301,6 +314,7 @@ export const CalculatorsPortal: React.FC = () => {
                             fontSize: "0.95rem",
                             fontFamily: "inherit",
                             background: C.offwhite,
+                            color: C.text,
                           }}
                         />
                       </label>
@@ -309,7 +323,7 @@ export const CalculatorsPortal: React.FC = () => {
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           <span style={{ fontWeight: 700, color: C.navy }}>Quick formula</span>
                           <div style={{ background: C.offwhite, borderRadius: 12, padding: 12, color: C.text, fontSize: "0.88rem", lineHeight: 1.6 }}>
-                            {activeCalculator.id === "paye" && `PAYE = gross × ${rates.paye}%`}
+                            {activeCalculator.id === "paye" && "PAYE = progressive bands from 0% to 40% + 10% surtax"}
                             {activeCalculator.id === "vat" && `VAT = amount × ${rates.vat}%`}
                             {activeCalculator.id === "wht" && `WHT = amount × ${rates.wht}%`}
                             {activeCalculator.id === "import" && `Duty + VAT = value × ${rates.import}%`}

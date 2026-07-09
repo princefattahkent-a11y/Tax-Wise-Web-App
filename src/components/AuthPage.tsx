@@ -754,7 +754,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
         .auth-container {
           display: flex; width: 100vw; min-height: 100vh;
           font-family: 'Inter', system-ui, -apple-system, sans-serif;
-          background: #FAFAF8;
+          background: var(--color-offwhite);
         }
 
         /* ── Left showcase ── */
@@ -775,7 +775,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
         .auth-form-panel {
           flex: 0.9; display: flex; flex-direction: column;
           justify-content: center; align-items: center;
-          padding: 48px 8%; background: #FAFAF8; position: relative;
+          padding: 48px 8%; background: var(--color-offwhite); position: relative;
         }
         .auth-form-card { width: 100%; max-width: 460px; }
         .auth-form-content { animation: authFadeIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
@@ -784,14 +784,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
         .auth-back-btn {
           position: absolute; top: 32px; left: 32px;
           display: flex; align-items: center; gap: 6px;
-          background: white; border: 1px solid rgba(15,32,68,0.08);
-          border-radius: 10px; color: #0F2044;
+          background: var(--color-white); border: 1px solid var(--color-border);
+          border-radius: 10px; color: var(--color-text);
           font-size: 0.8rem; font-weight: 600; font-family: inherit;
           padding: 8px 14px; cursor: pointer;
           transition: all 0.2s ease;
           box-shadow: 0 2px 8px rgba(15,32,68,0.02); z-index: 100;
         }
-        .auth-back-btn:hover { background: #F8F7F4; transform: translateX(-2px); }
+        .auth-back-btn:hover { background: var(--color-offwhite); transform: translateX(-2px); }
 
         /* ── Tab switcher ── */
         .auth-tab-btn {
