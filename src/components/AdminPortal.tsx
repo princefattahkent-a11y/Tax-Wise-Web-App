@@ -361,6 +361,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
   const [bulkFiles, setBulkFiles] = useState<PendingFile[]>([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [bulkDragActive, setBulkDragActive] = useState(false);
+  const [expandedFileId, setExpandedFileId] = useState<string | null>(null);
   const bulkInputRef = React.useRef<HTMLInputElement>(null);
 
   // Precedents deduplication states
@@ -767,7 +768,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
     setBulkProcessing(false);
   };
 
-  const handleUpdateBulkExtractedField = (id: string, field: keyof Required<PendingFile>["extracted"], value: any) => {
+  const handleUpdateBulkExtractedField = (id: string, field: keyof Required<PendingFile>["extracted"], value: string | number) => {
     setBulkFiles(prev => prev.map(f => {
       if (f.id === id && f.extracted) {
         return {
@@ -1006,6 +1007,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
           <div style={{ display: "flex", gap: 10 }}>
             <Button variant="outline" onClick={scanForDuplicates}>
               🔍 Scan for Duplicates
+            </Button>
+            <Button variant="outline" onClick={() => {
+              setBulkFiles([]);
+              setShowBulkModal(true);
+            }}>
+              📁 Bulk Upload Cases
             </Button>
             <Button variant="primary" onClick={() => {
               setIsNewPrecedent(true);
@@ -2172,6 +2179,266 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
               </div>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Bulk Upload Modal */}
+      <Modal open={showBulkModal} onClose={() => { if (!bulkProcessing) setShowBulkModal(false); }} title="Bulk Case Precedent Ingestion" width={920}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ fontSize: "0.85rem", color: C.muted, lineHeight: 1.5, margin: 0 }}>
+            Upload multiple Uganda Tax Appeals Tribunal (TAT) rulings, judgments, or precedent documents.
+            Our intelligent AI system will parse each document in parallel, extract the core details, generate summaries, and prepare them for your directory.
+          </p>
+
+          {/* Drag & Drop Zone */}
+          <div
+            onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setBulkDragActive(true); }}
+            onDragOver={e => { e.preventDefault(); e.stopPropagation(); setBulkDragActive(true); }}
+            onDragLeave={e => { e.preventDefault(); e.stopPropagation(); setBulkDragActive(false); }}
+            onDrop={e => {
+              e.preventDefault(); e.stopPropagation(); setBulkDragActive(false);
+              if (e.dataTransfer.files) handleBulkFilesSelect(e.dataTransfer.files);
+            }}
+            onClick={() => !bulkProcessing && bulkInputRef.current?.click()}
+            style={{
+              border: `2px dashed ${bulkDragActive ? C.teal : C.border}`,
+              borderRadius: 14,
+              padding: "24px 16px",
+              background: bulkDragActive ? "rgba(26,123,107,0.05)" : C.offwhite,
+              cursor: bulkProcessing ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              textAlign: "center"
+            }}
+          >
+            <input
+              ref={bulkInputRef}
+              type="file"
+              accept={SUPPORTED_DOCUMENT_ACCEPT}
+              multiple
+              style={{ display: "none" }}
+              onChange={e => { if (e.target.files) handleBulkFilesSelect(e.target.files); }}
+              disabled={bulkProcessing}
+            />
+            <div style={{ fontSize: "2.2rem" }}>📂</div>
+            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: C.navy }}>Select &amp; Upload Multiple Case Documents</div>
+            <div style={{ fontSize: "0.78rem", color: C.muted, maxWidth: 450, lineHeight: 1.5 }}>
+              Drag &amp; drop multiple PDFs or documents here, or click to browse.
+              You can review, edit, and save them individually or in bulk.
+            </div>
+            <div style={{ fontSize: "0.7rem", color: C.muted, marginTop: 4 }}>
+              Supports PDFs, Microsoft Word, scanned files &amp; images up to 20MB each
+            </div>
+          </div>
+
+          {/* Controls Bar */}
+          {bulkFiles.length > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(15,32,68,0.02)", padding: "12px 16px", borderRadius: 10, border: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: "0.8rem", fontWeight: 700, color: C.navy }}>
+                📊 Queue: {bulkFiles.length} file(s) ({bulkFiles.filter(f => f.status === "success").length} parsed, {bulkFiles.filter(f => f.isSaved).length} saved)
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {bulkFiles.some(f => f.status === "pending") && (
+                  <Button variant="primary" small onClick={() => processBulkFiles()} disabled={bulkProcessing}>
+                    {bulkProcessing ? "Parsing Documents…" : "⚡ Start AI Ingestion"}
+                  </Button>
+                )}
+                {bulkFiles.some(f => f.status === "success" && !f.isSaved) && (
+                  <Button variant="gold" small onClick={handleSaveAllBulk} disabled={bulkProcessing}>
+                    💾 Save All Parsed Cases
+                  </Button>
+                )}
+                <Button variant="ghost" small onClick={() => { if (!bulkProcessing) setBulkFiles([]); }} disabled={bulkProcessing}>
+                  Clear All
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Files List */}
+          {bulkFiles.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 400, overflowY: "auto", paddingRight: 4 }}>
+              {bulkFiles.map(file => {
+                const isExpanded = expandedFileId === file.id;
+                const sizeFmt = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+                return (
+                  <div key={file.id} style={{ border: `1px solid ${file.isSaved ? C.green : file.status === "error" ? C.red : C.border}`, borderRadius: 12, overflow: "hidden", background: C.white, boxShadow: "0 2px 6px rgba(0,0,0,0.01)" }}>
+                    {/* Item Header */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: file.isSaved ? "rgba(16,185,129,0.04)" : file.status === "processing" ? "rgba(26,123,107,0.03)" : C.white }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: "1.2rem" }}>
+                          {file.isSaved ? "✅" : file.status === "success" ? "✨" : file.status === "error" ? "❌" : file.status === "processing" ? "⚙️" : "⏳"}
+                        </span>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: "0.84rem", fontWeight: 700, color: C.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {file.name}
+                          </div>
+                          <div style={{ fontSize: "0.74rem", color: C.muted, display: "flex", gap: 8 }}>
+                            <span>{sizeFmt}</span>
+                            <span>•</span>
+                            <span style={{
+                              fontWeight: 700,
+                              color: file.isSaved ? C.green : file.status === "success" ? C.teal : file.status === "error" ? C.red : file.status === "processing" ? C.teal : C.muted
+                            }}>
+                              {file.isSaved ? "SAVED TO LIBRARY" : file.status.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Item Actions */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 12 }}>
+                        {file.status === "pending" && (
+                          <button onClick={() => processBulkFiles([file])} disabled={bulkProcessing} style={{ padding: "6px 12px", background: C.teal, color: C.white, border: "none", borderRadius: 6, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>
+                            ⚡ Ingest File
+                          </button>
+                        )}
+                        {file.status === "success" && !file.isSaved && (
+                          <button onClick={() => handleSaveBulkItem(file)} disabled={bulkProcessing} style={{ padding: "6px 12px", background: C.navy, color: C.white, border: "none", borderRadius: 6, fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" }}>
+                            📥 Save to Library
+                          </button>
+                        )}
+                        {file.extracted && (
+                          <button onClick={() => setExpandedFileId(isExpanded ? null : file.id)} style={{ padding: "6px 10px", border: `1px solid ${C.border}`, borderRadius: 6, fontSize: "0.74rem", fontWeight: 600, background: C.white, cursor: "pointer" }}>
+                            {isExpanded ? "▲ Hide Form" : "▼ Review Extracted Data"}
+                          </button>
+                        )}
+                        <button onClick={() => { if (!bulkProcessing) setBulkFiles(prev => prev.filter(f => f.id !== file.id)); }} disabled={bulkProcessing} style={{ width: 28, height: 28, border: "none", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: C.red, background: "rgba(239,68,68,0.08)", cursor: "pointer" }} title="Remove file">
+                          🗑
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expandable extracted review form */}
+                    {isExpanded && file.extracted && (
+                      <div style={{ padding: "16px", borderTop: `1px solid ${C.border}`, background: C.offwhite }}>
+                        {file.error && (
+                          <div style={{ background: file.isSaved ? "rgba(16,185,129,0.06)" : "#FEF3CD", border: `1px solid ${file.isSaved ? C.green : C.gold}`, borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: file.isSaved ? C.green : "#92620A", fontWeight: 600, marginBottom: 14 }}>
+                            {file.isSaved ? "✓ Successfully inserted into tat_cases database table." : `⚠️ ${file.error}`}
+                          </div>
+                        )}
+
+                        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+                          <div>
+                            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Case Title</label>
+                            <input
+                              type="text"
+                              value={file.extracted.title}
+                              onChange={e => handleUpdateBulkExtractedField(file.id, "title", e.target.value)}
+                              disabled={file.isSaved}
+                              style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", boxSizing: "border-box" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Case Number</label>
+                            <input
+                              type="text"
+                              value={file.extracted.case_number}
+                              onChange={e => handleUpdateBulkExtractedField(file.id, "case_number", e.target.value)}
+                              disabled={file.isSaved}
+                              style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", boxSizing: "border-box" }}
+                            />
+                          </div>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+                          <div>
+                            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Year</label>
+                            <input
+                              type="number"
+                              value={file.extracted.year}
+                              onChange={e => handleUpdateBulkExtractedField(file.id, "year", Number(e.target.value))}
+                              disabled={file.isSaved}
+                              style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", boxSizing: "border-box" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Tax Type</label>
+                            <select
+                              value={file.extracted.tax_type}
+                              onChange={e => handleUpdateBulkExtractedField(file.id, "tax_type", e.target.value)}
+                              disabled={file.isSaved}
+                              style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", background: C.white }}
+                            >
+                              {["VAT", "Income Tax", "WHT", "Excise Duty", "Customs", "Jurisdiction", "Other"].map(t => <option key={t}>{t}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Outcome</label>
+                            <select
+                              value={file.extracted.outcome}
+                              onChange={e => handleUpdateBulkExtractedField(file.id, "outcome", e.target.value)}
+                              disabled={file.isSaved}
+                              style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", background: C.white }}
+                            >
+                              {["Allowed", "Dismissed", "Partial"].map(o => <option key={o}>{o}</option>)}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Extracted Case Summary</label>
+                          <textarea
+                            rows={3}
+                            value={file.extracted.summary}
+                            onChange={e => handleUpdateBulkExtractedField(file.id, "summary", e.target.value)}
+                            disabled={file.isSaved}
+                            style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", resize: "vertical", boxSizing: "border-box" }}
+                          />
+                        </div>
+
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Practitioner Commentary (AI Generated)</label>
+                          <textarea
+                            rows={3}
+                            value={file.extracted.ai_commentary}
+                            onChange={e => handleUpdateBulkExtractedField(file.id, "ai_commentary", e.target.value)}
+                            disabled={file.isSaved}
+                            style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", resize: "vertical", boxSizing: "border-box" }}
+                          />
+                        </div>
+
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: C.navy, marginBottom: 4 }}>Full Document Text Content (OCR / Extracted)</label>
+                          <textarea
+                            rows={4}
+                            value={file.extracted.full_text}
+                            onChange={e => handleUpdateBulkExtractedField(file.id, "full_text", e.target.value)}
+                            disabled={file.isSaved}
+                            style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", fontSize: "0.8rem", outline: "none", resize: "vertical", boxSizing: "border-box" }}
+                          />
+                        </div>
+
+                        {!file.isSaved && (
+                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                            <Button variant="primary" small onClick={() => handleSaveBulkItem(file)} disabled={bulkProcessing}>
+                              📥 Save Case to Library
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {bulkFiles.length === 0 && (
+            <div style={{ textAlign: "center", padding: "36px 0", color: C.muted }}>
+              <span style={{ fontSize: "2rem" }}>⚖️</span>
+              <p style={{ fontSize: "0.84rem", marginTop: 8, fontWeight: 500 }}>No documents loaded yet. Drop some files to begin bulk ingestion!</p>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+            <Button variant="ghost" small onClick={() => { if (!bulkProcessing) setShowBulkModal(false); }} disabled={bulkProcessing}>
+              Close Window
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>
