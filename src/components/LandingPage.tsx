@@ -134,9 +134,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
   const [scrollProgress, setScrollProgress] = useState(0);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULTS);
   const [dynamicStats, setDynamicStats] = useState({
-    cases: "1,200+",
+    cases: "120",
     timeSaved: "85%",
-    practitioners: "350+",
+    practitioners: "35",
     calculators: "6"
   });
 
@@ -173,14 +173,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           console.warn("Could not retrieve exact live row counts, using defaults.", e);
         }
 
-        // Base values: Cases analyzed = 1200, Practitioners = 350, Calculators = 6
-        const calculatedCases = 1200 + userCasesCount + tatCasesCount;
-        const calculatedPractitioners = 350 + registeredUsersCount;
+        // Base values: Cases analyzed = actual count in DB, Practitioners = actual count in DB, Calculators = 6
+        const calculatedCases = userCasesCount + tatCasesCount;
+        const calculatedPractitioners = registeredUsersCount;
 
         setDynamicStats({
-          cases: `${calculatedCases.toLocaleString()}+`,
+          cases: `${calculatedCases.toLocaleString()}`,
           timeSaved: mergedSettings.stat_time_saved || "85%",
-          practitioners: `${calculatedPractitioners.toLocaleString()}+`,
+          practitioners: `${calculatedPractitioners.toLocaleString()}`,
           calculators: mergedSettings.stat_calculators || "6"
         });
 
