@@ -25,6 +25,27 @@ interface Precedent {
   created_at: string;
 }
 
+interface PendingFile {
+  id: string;
+  name: string;
+  size: number;
+  status: "pending" | "processing" | "success" | "error";
+  error?: string;
+  file?: File;
+  extracted?: {
+    case_number: string;
+    title: string;
+    year: number;
+    tax_type: string;
+    outcome: string;
+    summary: string;
+    ai_commentary: string;
+    full_text: string;
+  };
+  storagePath?: string;
+  isSaved?: boolean;
+}
+
 interface Lesson {
   id: string;
   title: string;
@@ -335,6 +356,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
   const [pdfFileName, setPdfFileName] = useState("");
   const pdfInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Bulk upload states
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<PendingFile[]>([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [bulkDragActive, setBulkDragActive] = useState(false);
+  const bulkInputRef = React.useRef<HTMLInputElement>(null);
+
   // Precedents deduplication states
   const [duplicateGroups, setDuplicateGroups] = useState<{ caseNumber: string; cases: Precedent[] }[]>([]);
   const [isScanPerformed, setIsScanPerformed] = useState(false);
@@ -594,6 +622,164 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onNavigate, currentAdm
     } finally {
       setPdfUploading(false);
     }
+  };
+
+  // ── Bulk PDF Upload & AI Extraction for Precedents
+  const handleBulkFilesSelect = (files: FileList) => {
+    const newFiles: PendingFile[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!isSupportedDocument(file.name)) {
+        newFiles.push({
+          id: `${Date.now()}_${i}_${file.name}`,
+          name: file.name,
+          size: file.size,
+          status: "error",
+          error: "Unsupported file type. Please upload a PDF, Word doc, or image.",
+        });
+        continue;
+      }
+      if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+        newFiles.push({
+          id: `${Date.now()}_${i}_${file.name}`,
+          name: file.name,
+          size: file.size,
+          status: "error",
+          error: "File exceeds 20MB limit.",
+        });
+        continue;
+      }
+      newFiles.push({
+        id: `${Date.now()}_${i}_${file.name}`,
+        name: file.name,
+        size: file.size,
+        status: "pending",
+        file,
+      });
+    }
+    setBulkFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const processBulkFiles = async (filesToProcess?: PendingFile[]) => {
+    const list = filesToProcess || bulkFiles;
+    const pending = list.filter(f => f.status === "pending");
+    if (pending.length === 0) return;
+
+    setBulkProcessing(true);
+
+    for (const item of pending) {
+      if (!item.file) continue;
+
+      // Update item status to processing in state
+      setBulkFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: "processing" } : f));
+
+      try {
+        const fd = new FormData();
+        fd.append("file", item.file);
+
+        const res = await fetch("/api/admin/parse-precedent", { method: "POST", body: fd });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({ error: "Server error" }));
+          throw new Error(errData.error || `Server returned ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const ex = data.extracted;
+        const alreadyExists = precedents.some(p => p.case_number.trim().toLowerCase() === ex?.case_number?.trim()?.toLowerCase());
+
+        setBulkFiles(prev => prev.map(f => f.id === item.id ? {
+          ...f,
+          status: "success",
+          storagePath: data.storage_path,
+          extracted: {
+            case_number: ex?.case_number || "",
+            title: ex?.title || "",
+            year: Number(ex?.year) || new Date().getFullYear(),
+            tax_type: ex?.tax_type || "VAT",
+            outcome: ex?.outcome || "Allowed",
+            summary: ex?.summary || "",
+            ai_commentary: ex?.ai_commentary || "",
+            full_text: ex?.full_text || "",
+          },
+          error: alreadyExists ? `Warning: Case number "${ex?.case_number}" already exists in library.` : undefined
+        } : f));
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Failed to parse document.";
+        setBulkFiles(prev => prev.map(f => f.id === item.id ? { ...f, status: "error", error: msg } : f));
+      }
+    }
+
+    setBulkProcessing(false);
+  };
+
+  const handleSaveBulkItem = async (item: PendingFile) => {
+    if (!item.extracted || item.isSaved) return;
+
+    try {
+      const trimmedCaseNumber = item.extracted.case_number.trim();
+      if (!trimmedCaseNumber) throw new Error("Case Number is required.");
+      const trimmedTitle = item.extracted.title.trim();
+      if (!trimmedTitle) throw new Error("Case Title is required.");
+
+      // Check duplicate again in database
+      const exists = precedents.some(p => p.case_number.trim().toLowerCase() === trimmedCaseNumber.toLowerCase());
+      if (exists) {
+        throw new Error(`Case Number "${trimmedCaseNumber}" already exists.`);
+      }
+
+      const payload = {
+        case_number: trimmedCaseNumber,
+        title: trimmedTitle,
+        year: Number(item.extracted.year),
+        tax_type: item.extracted.tax_type,
+        outcome: item.extracted.outcome,
+        summary: item.extracted.summary.trim(),
+        full_text: item.extracted.full_text?.trim() || null,
+        ai_commentary: item.extracted.ai_commentary?.trim() || null,
+      };
+
+      const { data, error } = await supabase.from("tat_cases").insert([payload]).select();
+      if (error) throw error;
+
+      await logAdminAction("precedent_created", currentAdminId, { case_number: trimmedCaseNumber });
+
+      if (data) {
+        setPrecedents(prev => [data[0] as Precedent, ...prev]);
+      }
+
+      setBulkFiles(prev => prev.map(f => f.id === item.id ? { ...f, isSaved: true, error: undefined } : f));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to save.";
+      setBulkFiles(prev => prev.map(f => f.id === item.id ? { ...f, error: msg } : f));
+    }
+  };
+
+  const handleSaveAllBulk = async () => {
+    const successItems = bulkFiles.filter(f => f.status === "success" && !f.isSaved && f.extracted);
+    if (successItems.length === 0) return;
+
+    setBulkProcessing(true);
+    for (const item of successItems) {
+      await handleSaveBulkItem(item);
+    }
+    setBulkProcessing(false);
+  };
+
+  const handleUpdateBulkExtractedField = (id: string, field: keyof Required<PendingFile>["extracted"], value: any) => {
+    setBulkFiles(prev => prev.map(f => {
+      if (f.id === id && f.extracted) {
+        return {
+          ...f,
+          extracted: {
+            ...f.extracted,
+            [field]: value
+          }
+        };
+      }
+      return f;
+    }));
   };
 
   // ── Precedent CRUD
