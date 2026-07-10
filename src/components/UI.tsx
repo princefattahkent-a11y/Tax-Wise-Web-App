@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "motion/react";
 import { C } from "../lib/constants";
 import { X } from "lucide-react";
@@ -184,8 +185,22 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, width = 560 }) => {
+  React.useEffect(() => {
+    if (open) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.classList.remove("modal-open");
+      };
+    }
+  }, [open]);
+
   if (!open) return null;
-  return (
+  if (typeof window === "undefined") return null;
+
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -194,14 +209,14 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, wi
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(15, 32, 68, 0.45)",
+        background: "rgba(10, 15, 30, 0.6)",
         zIndex: 1000,
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "center",
         padding: "40px 20px 20px",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
       }}
       onClick={onClose}
     >
@@ -261,7 +276,8 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, wi
         </div>
         <div style={{ padding: 28 }}>{children}</div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
 import { Card, Button } from "./UI";
@@ -41,6 +42,18 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onRefres
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleteStep, setDeleteStep] = useState<"confirm" | "deleting" | "done">("confirm");
+
+  React.useEffect(() => {
+    if (showDeleteModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.classList.remove("modal-open");
+      };
+    }
+  }, [showDeleteModal]);
 
   const roles = [
     "Tax Consultant",
@@ -559,13 +572,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onRefres
       </div>
 
       {/* DELETE ACCOUNT MODAL */}
-      {showDeleteModal && (
+      {showDeleteModal && typeof window !== "undefined" && createPortal(
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 32, 68, 0.65)",
-            backdropFilter: "blur(6px)",
+            background: "rgba(10, 15, 30, 0.6)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -792,7 +806,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onRefres
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

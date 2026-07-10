@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase } from "../lib/supabaseClient";
 import { C, riskColors } from "../lib/constants";
@@ -178,6 +179,18 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
       });
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.classList.remove("modal-open");
+      };
+    }
+  }, [open]);
+
   const types = ["All", ...Array.from(new Set(cases.map(c => c.tax_type)))];
   const years = ["All", ...Array.from(new Set(cases.map(c => String(c.year))))];
   const outcomes = ["All", "Allowed", "Dismissed", "Partial"];
@@ -191,7 +204,9 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
     return matchQ && matchT && matchY && matchO;
   });
 
-  return (
+  if (typeof window === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -202,14 +217,14 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 32, 68, 0.5)",
+            background: "rgba(10, 15, 30, 0.6)",
             zIndex: 1100,
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "center",
             padding: "32px 20px",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
           }}
           onClick={onClose}
         >
@@ -407,7 +422,8 @@ const LibraryPicker: React.FC<LibraryPickerProps> = ({ open, onClose, onSelect }
       </motion.div>
     </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

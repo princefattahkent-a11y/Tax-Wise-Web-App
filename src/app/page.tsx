@@ -68,6 +68,18 @@ export default function TaxWiseSaaS() {
   }, []);
 
   useEffect(() => {
+    if (isMobile && isMobileMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.classList.remove("modal-open");
+      };
+    }
+  }, [isMobile, isMobileMenuOpen]);
+
+  useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
     }
@@ -394,8 +406,9 @@ export default function TaxWiseSaaS() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 20, 36, 0.4)",
-            backdropFilter: "blur(4px)",
+            background: "rgba(10, 15, 30, 0.5)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
             zIndex: 90,
             animation: "fadeIn 0.2s ease-out"
           }}
@@ -678,7 +691,7 @@ export default function TaxWiseSaaS() {
         </header>
 
         {/* PAGE CONTENT */}
-        <div ref={scrollContainerRef} style={{ flex: 1, padding: isMobile ? "20px 16px" : "36px 40px", overflowY: "auto" }}>
+        <div ref={scrollContainerRef} className="main-scroll-container" style={{ flex: 1, padding: isMobile ? "20px 16px" : "36px 40px", overflowY: "auto" }}>
           <main key={page} className="page-fade-in" style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
             {renderActivePage()}
           </main>

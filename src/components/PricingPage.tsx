@@ -312,32 +312,51 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onRefreshUser })
         })}
       </div>
 
-      <Card style={{ padding: 28, background: C.navy, border: "none", boxShadow: "0 10px 24px rgba(15,32,68,0.15)" }}>
+      <Card
+        style={{
+          padding: "24px 28px",
+          border: `1.5px solid ${C.border}`,
+          background: "rgba(26, 123, 107, 0.04)",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.02)",
+        }}
+      >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
           <div>
-            <div style={{ fontWeight: 800, color: C.white, marginBottom: 4, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
-              <CreditCard size={18} style={{ color: C.teal }} />
+            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 4, fontSize: "0.98rem", display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ display: "inline-flex", background: "rgba(26, 123, 107, 0.1)", borderRadius: 8, padding: 6, color: C.teal }}>
+                <CreditCard size={18} />
+              </span>
               <span>Secure Mobile Money & Card Gateway</span>
             </div>
-            <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,.65)", fontWeight: 500 }}>
+            <div style={{ fontSize: "0.85rem", color: C.muted, fontWeight: 500, marginLeft: 38 }}>
               Transactions processed locally via secure channels. Instant activation.
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {["MTN MoMo", "Airtel Money", "Visa Card", "Mastercard"].map((m) => (
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginLeft: 38 }}>
+            {[
+              { name: "MTN MoMo", dotColor: "#F2C94C" },
+              { name: "Airtel Money", dotColor: "#EB5757" },
+              { name: "Visa Card", dotColor: "#2F80ED" },
+              { name: "Mastercard", dotColor: "#F2994A" }
+            ].map((m) => (
               <div
-                key={m}
+                key={m.name}
                 style={{
-                  background: "rgba(255,255,255,.07)",
-                  border: "1px solid rgba(255,255,255,.12)",
-                  borderRadius: 6,
-                  padding: "6px 12px",
-                  fontSize: "0.74rem",
-                  color: "rgba(255,255,255,.85)",
+                  background: C.white,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 8,
+                  padding: "6px 14px",
+                  fontSize: "0.78rem",
+                  color: C.navy,
                   fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
                 }}
               >
-                {m}
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.dotColor }} />
+                <span>{m.name}</span>
               </div>
             ))}
           </div>
