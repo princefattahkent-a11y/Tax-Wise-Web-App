@@ -401,7 +401,8 @@ export const RentalTaxCalculator: React.FC = () => {
                             fontSize: "12.5px",
                             outline: "none",
                             fontWeight: 600,
-                            color: C.navy
+                            color: C.navy,
+                            background: C.offwhite
                           }}
                         />
                         <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center" }}>
@@ -422,6 +423,7 @@ export const RentalTaxCalculator: React.FC = () => {
                               outline: "none",
                               fontWeight: 600,
                               color: C.navy,
+                              background: C.offwhite,
                               appearance: "none"
                             }}
                           />
@@ -439,7 +441,7 @@ export const RentalTaxCalculator: React.FC = () => {
                             outline: "none",
                             fontWeight: 600,
                             color: C.navy,
-                            background: C.white,
+                            background: C.offwhite,
                             cursor: "pointer"
                           }}
                         >
