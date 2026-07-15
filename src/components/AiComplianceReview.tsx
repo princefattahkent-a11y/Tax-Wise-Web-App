@@ -109,27 +109,6 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
     setMounted(true);
   }, []);
 
-  // Load Periods for selected Company
-  const loadPeriods = async (companyId: string) => {
-    try {
-      const data = await getTaxPeriodsAction(companyId);
-      setPeriods(data);
-      if (data.length > 0) {
-        // Set form figures from the most recent period if available
-        const latest = data[0];
-        setFormFromRecord(latest);
-      }
-    } catch (err) {
-      console.error("Error loading periods:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedCompany) {
-      loadPeriods(selectedCompany.id);
-    }
-  }, [selectedCompany]);
-
   // Map database period figures back to UI inputs
   const setFormFromRecord = (rec: any) => {
     setSelectedPeriod(rec.period_name);
@@ -153,6 +132,27 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
     setReviewResult(null);
     setFindings([]);
   };
+
+  // Load Periods for selected Company
+  const loadPeriods = async (companyId: string) => {
+    try {
+      const data = await getTaxPeriodsAction(companyId);
+      setPeriods(data);
+      if (data.length > 0) {
+        // Set form figures from the most recent period if available
+        const latest = data[0];
+        setFormFromRecord(latest);
+      }
+    } catch (err) {
+      console.error("Error loading periods:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCompany) {
+      loadPeriods(selectedCompany.id);
+    }
+  }, [selectedCompany]);
 
   // Create Company Action Handler
   const handleCreateCompany = async () => {
