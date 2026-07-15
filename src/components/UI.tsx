@@ -39,6 +39,7 @@ interface ButtonProps {
   small?: boolean;
   disabled?: boolean;
   style?: React.CSSProperties;
+  className?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -48,6 +49,7 @@ export const Button: React.FC<ButtonProps> = ({
   small,
   disabled,
   style = {},
+  className,
 }) => {
   const [hovered, setHovered] = useState(false);
 
@@ -113,6 +115,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className={className}
     >
       {children}
     </motion.button>

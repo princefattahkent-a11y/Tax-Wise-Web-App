@@ -5,10 +5,12 @@ import { supabase } from "../lib/supabaseClient";
 import { COMPLIANCE_ITEMS, C, riskColors } from "../lib/constants";
 import { Badge, Button, Card, ProgressBar } from "./UI";
 import { Check, AlertTriangle, Sparkles, FolderOpen } from "lucide-react";
+import { AiComplianceReview } from "./AiComplianceReview";
 
 interface ComplianceCheckerProps {
   user: {
     id: string;
+    full_name?: string;
   };
 }
 
@@ -21,6 +23,7 @@ interface PastReport {
 }
 
 export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) => {
+  const [mode, setMode] = useState<"review" | "checklist">("review");
   const [tab, setTab] = useState<"efris" | "vat" | "paye">("efris");
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [aiReport, setAiReport] = useState("");
@@ -126,264 +129,308 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
     >
       <motion.div variants={itemVariants} style={{ marginBottom: 32 }}>
         <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "1.85rem", color: C.navy, marginBottom: 6, fontWeight: 800 }}>
-          Compliance Checker
+          Compliance Cockpit
         </h1>
         <p style={{ color: C.muted, fontSize: "0.92rem", fontWeight: 500 }}>
-          Work through eFRIS, VAT, and PAYE statutory checklists to generate an AI risk audit report.
+          Manage automated AI compliance reviews or run manual statutory checklists.
         </p>
       </motion.div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 28, alignItems: "start" }}>
-        <motion.div variants={itemVariants}>
-          {/* Tab Selectors */}
-          <div style={{ display: "flex", gap: 10, marginBottom: 20, background: "rgba(15, 32, 68, 0.03)", padding: 6, borderRadius: 12, width: "fit-content" }}>
-            {tabs.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => {
-                  setTab(t.key);
-                  setAiReport("");
-                }}
-                style={{
-                  padding: "8px 24px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: tab === t.key ? C.teal : "transparent",
-                  color: tab === t.key ? C.white : C.muted,
-                  fontWeight: 700,
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                  fontFamily: "inherit",
-                  boxShadow: tab === t.key ? "0 4px 10px rgba(26,123,107,0.2)" : "none"
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+      {/* Mode Switcher Tabs */}
+      <div style={{ display: "flex", gap: 16, marginBottom: 28, borderBottom: `1px solid ${C.border}`, paddingBottom: 10 }}>
+        <button 
+          onClick={() => setMode("review")}
+          style={{
+            background: "transparent",
+            border: "none",
+            fontSize: "0.875rem",
+            fontWeight: 700,
+            color: mode === "review" ? C.teal : C.muted,
+            borderBottom: mode === "review" ? `3px solid ${C.teal}` : "3px solid transparent",
+            paddingBottom: 10,
+            marginBottom: -12,
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+        >
+          AI Compliance Review Cockpit
+        </button>
+        <button 
+          onClick={() => setMode("checklist")}
+          style={{
+            background: "transparent",
+            border: "none",
+            fontSize: "0.875rem",
+            fontWeight: 700,
+            color: mode === "checklist" ? C.teal : C.muted,
+            borderBottom: mode === "checklist" ? `3px solid ${C.teal}` : "3px solid transparent",
+            paddingBottom: 10,
+            marginBottom: -12,
+            cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+        >
+          Manual Statutory Checklist
+        </button>
+      </div>
 
-          <Card style={{ padding: 28 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontWeight: 800, color: C.navy, fontSize: "0.98rem" }}>
-                {tabs.find((t) => t.key === tab)?.label} Auditing Checklist
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div
+      {mode === "review" ? (
+        <motion.div variants={itemVariants}>
+          <AiComplianceReview user={user} />
+        </motion.div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 28, alignItems: "start" }}>
+          <motion.div variants={itemVariants}>
+            {/* Tab Selectors */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 20, background: "rgba(15, 32, 68, 0.03)", padding: 6, borderRadius: 12, width: "fit-content" }}>
+              {tabs.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => {
+                    setTab(t.key);
+                    setAiReport("");
+                  }}
                   style={{
-                    fontFamily: "'Playfair Display', Georgia, serif",
-                    fontSize: "1.6rem",
-                    fontWeight: 800,
-                    color: score >= 80 ? C.green : score >= 50 ? C.gold : C.red,
+                    padding: "8px 24px",
+                    borderRadius: 8,
+                    border: "none",
+                    background: tab === t.key ? C.teal : "transparent",
+                    color: tab === t.key ? C.white : C.muted,
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                    fontFamily: "inherit",
+                    boxShadow: tab === t.key ? "0 4px 10px rgba(26,123,107,0.2)" : "none"
                   }}
                 >
-                  {score}%
-                </div>
-                <div style={{ fontSize: "0.75rem", color: C.muted, fontWeight: 600 }}>COMPLETED</div>
-              </div>
+                  {t.label}
+                </button>
+              ))}
             </div>
 
-            {/* Custom Gradient Progress Bar */}
-            <ProgressBar 
-              progress={score} 
-              color={score >= 80 ? C.green : score >= 50 ? C.gold : C.red} 
-              style={{ marginBottom: 24 }} 
-            />
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {items.map((item) => {
-                const isChecked = checked[`${tab}-${item.id}`];
-                const [rc, rb] = riskColors[item.risk];
-                return (
+            <Card style={{ padding: 28 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div style={{ fontWeight: 800, color: C.navy, fontSize: "0.98rem" }}>
+                  {tabs.find((t) => t.key === tab)?.label} Auditing Checklist
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div
-                    key={item.id}
-                    onClick={() => toggle(item.id)}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                      padding: "14px 18px",
-                      borderRadius: 12,
-                      border: `1.5px solid ${isChecked ? `${C.teal}30` : C.border}`,
-                      background: isChecked ? C.tealLight : C.white,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      animation: isChecked ? "checkPop 0.25s ease" : "none",
-                      boxShadow: isChecked ? "none" : "0 2px 4px rgba(15,32,68,0.01)"
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontSize: "1.6rem",
+                      fontWeight: 800,
+                      color: score >= 80 ? C.green : score >= 50 ? C.gold : C.red,
                     }}
                   >
+                    {score}%
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: C.muted, fontWeight: 600 }}>COMPLETED</div>
+                </div>
+              </div>
+
+              {/* Custom Gradient Progress Bar */}
+              <ProgressBar 
+                progress={score} 
+                color={score >= 80 ? C.green : score >= 50 ? C.gold : C.red} 
+                style={{ marginBottom: 24 }} 
+              />
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {items.map((item) => {
+                  const isChecked = checked[`${tab}-${item.id}`];
+                  const [rc, rb] = riskColors[item.risk];
+                  return (
                     <div
+                      key={item.id}
+                      onClick={() => toggle(item.id)}
                       style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 6,
-                        border: `2px solid ${isChecked ? C.teal : C.border}`,
-                        background: isChecked ? C.teal : C.white,
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        color: C.white,
-                        fontSize: "0.8rem",
-                        fontWeight: 900,
-                        transition: "all 0.15s ease"
+                        gap: 14,
+                        padding: "14px 18px",
+                        borderRadius: 12,
+                        border: `1.5px solid ${isChecked ? `${C.teal}30` : C.border}`,
+                        background: isChecked ? C.tealLight : C.white,
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        animation: isChecked ? "checkPop 0.25s ease" : "none",
+                        boxShadow: isChecked ? "none" : "0 2px 4px rgba(15,32,68,0.01)"
                       }}
                     >
-                      {isChecked ? <Check size={12} strokeWidth={3} /> : ""}
+                      <div
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 6,
+                          border: `2px solid ${isChecked ? C.teal : C.border}`,
+                          background: isChecked ? C.teal : C.white,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          color: C.white,
+                          fontSize: "0.8rem",
+                          fontWeight: 900,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {isChecked ? <Check size={12} strokeWidth={3} /> : ""}
+                      </div>
+                      <span
+                        style={{
+                          flex: 1,
+                          fontSize: "0.875rem",
+                          color: isChecked ? C.teal : C.text,
+                          textDecoration: isChecked ? "line-through" : "none",
+                          opacity: isChecked ? 0.75 : 1,
+                          lineHeight: 1.5,
+                          fontWeight: isChecked ? 500 : 600
+                        }}
+                      >
+                        {item.text}
+                      </span>
+                      <Badge color={rc} bg={rb}>
+                        {item.risk}
+                      </Badge>
                     </div>
-                    <span
-                      style={{
-                        flex: 1,
-                        fontSize: "0.875rem",
-                        color: isChecked ? C.teal : C.text,
-                        textDecoration: isChecked ? "line-through" : "none",
-                        opacity: isChecked ? 0.75 : 1,
-                        lineHeight: 1.5,
-                        fontWeight: isChecked ? 500 : 600
-                      }}
-                    >
-                      {item.text}
-                    </span>
-                    <Badge color={rc} bg={rb}>
-                      {item.risk}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <Card style={{ padding: 24 }}>
-            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 16, fontSize: "0.95rem" }}>Score Breakdown</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {["high", "medium", "low"].map((r) => {
-                const total = items.filter((i) => i.risk === r);
-                const done = total.filter((i) => checked[`${tab}-${i.id}`]);
-                const [rc, rb] = riskColors[r];
-                return (
-                  <div
-                    key={r}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid rgba(15,32,68,0.03)`, paddingBottom: 8 }}
-                  >
-                    <Badge color={rc} bg={rb}>
-                      {r} risk
-                    </Badge>
-                    <span style={{ fontSize: "0.85rem", color: C.navy, fontWeight: 700 }}>
-                      {done.length} / {total.length} cleared
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Pulsing Outstanding High-Risk Items Banner */}
-            {highRisks.length > 0 && (
-              <div 
-                style={{ 
-                  background: C.redLight, 
-                  borderRadius: 10, 
-                  padding: 14, 
-                  marginTop: 16,
-                  border: "1.5px solid transparent",
-                  animation: "pulseBorder 2.5s infinite"
-                }}
-              >
-                <div style={{ fontSize: "0.75rem", fontWeight: 800, color: C.red, marginBottom: 8, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 6 }}>
-                  <AlertTriangle size={14} />
-                  <span>{highRisks.length} HIGH-RISK VULNERABILITIES OUTSTANDING</span>
-                </div>
-                {highRisks.slice(0, 2).map((h) => (
-                  <div key={h.id} style={{ fontSize: "0.76rem", color: C.red, marginBottom: 4, display: "flex", gap: 5 }}>
-                    <span>•</span>
-                    <span style={{ fontWeight: 500 }}>{h.text.slice(0, 70)}...</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          <Card style={{ padding: 24 }}>
-            <div style={{ fontWeight: 800, color: C.navy, marginBottom: 8, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
-              <Sparkles size={16} style={{ color: C.gold }} />
-              <span>AI Compliance Audit</span>
-            </div>
-            <p style={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.6, marginBottom: 16, fontWeight: 500 }}>
-              Generates a detailed regulatory report outlining specific legal exposure and applicable penalties under the Tax Procedures Code Act.
-            </p>
-            <Button onClick={generateReport} disabled={aiLoading} style={{ width: "100%", justifyContent: "center" }}>
-              {aiLoading ? "⟳ Auditing Checklists..." : "Generate Risk Report"}
-            </Button>
-            
-            {aiReport && (
-              <div
-                style={{
-                  marginTop: 18,
-                  background: C.offwhite,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 10,
-                  padding: 16,
-                  fontSize: "0.82rem",
-                  color: C.text,
-                  lineHeight: 1.7,
-                  maxHeight: 280,
-                  overflowY: "auto",
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "inherit"
-                }}
-              >
-                {aiReport}
-              </div>
-            )}
-          </Card>
-
-          {pastReports.length > 0 && (
-            <Card style={{ padding: 24 }}>
-              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 14, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
-                <FolderOpen size={16} style={{ color: C.teal }} />
-                <span>Historic Audits</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 180, overflowY: "auto" }}>
-                {pastReports.map((report) => (
-                  <div
-                    key={report.id}
-                    onClick={() => loadPastReport(report)}
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: 8,
-                      background: C.white,
-                      cursor: "pointer",
-                      fontSize: "0.8rem",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      border: `1.5px solid ${C.border}`,
-                      transition: "all 0.2s"
-                    }}
-                    onMouseOver={e => {
-                      e.currentTarget.style.borderColor = C.teal;
-                      e.currentTarget.style.background = C.offwhite;
-                    }}
-                    onMouseOut={e => {
-                      e.currentTarget.style.borderColor = C.border;
-                      e.currentTarget.style.background = C.white;
-                    }}
-                  >
-                    <div>
-                      <strong style={{ color: C.navy, textTransform: "uppercase" }}>{report.type}</strong>
-                      <span style={{ color: C.muted, marginLeft: 6 }}>({report.score}%)</span>
-                    </div>
-                    <div style={{ color: C.muted, fontSize: "0.72rem", fontWeight: 600 }}>
-                      {new Date(report.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
-          )}
-        </motion.div>
-      </div>
+          </motion.div>
+
+          <motion.div variants={itemVariants} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <Card style={{ padding: 24 }}>
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 16, fontSize: "0.95rem" }}>Score Breakdown</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {["high", "medium", "low"].map((r) => {
+                  const total = items.filter((i) => i.risk === r);
+                  const done = total.filter((i) => checked[`${tab}-${i.id}`]);
+                  const [rc, rb] = riskColors[r];
+                  return (
+                    <div
+                      key={r}
+                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid rgba(15,32,68,0.03)`, paddingBottom: 8 }}
+                    >
+                      <Badge color={rc} bg={rb}>
+                        {r} risk
+                      </Badge>
+                      <span style={{ fontSize: "0.85rem", color: C.navy, fontWeight: 700 }}>
+                        {done.length} / {total.length} cleared
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pulsing Outstanding High-Risk Items Banner */}
+              {highRisks.length > 0 && (
+                <div 
+                  style={{ 
+                    background: C.redLight, 
+                    borderRadius: 10, 
+                    padding: 14, 
+                    marginTop: 16,
+                    border: "1.5px solid transparent",
+                    animation: "pulseBorder 2.5s infinite"
+                  }}
+                >
+                  <div style={{ fontSize: "0.75rem", fontWeight: 800, color: C.red, marginBottom: 8, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 6 }}>
+                    <AlertTriangle size={14} />
+                    <span>{highRisks.length} HIGH-RISK VULNERABILITIES OUTSTANDING</span>
+                  </div>
+                  {highRisks.slice(0, 2).map((h) => (
+                    <div key={h.id} style={{ fontSize: "0.76rem", color: C.red, marginBottom: 4, display: "flex", gap: 5 }}>
+                      <span>•</span>
+                      <span style={{ fontWeight: 500 }}>{h.text.slice(0, 70)}...</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card style={{ padding: 24 }}>
+              <div style={{ fontWeight: 800, color: C.navy, marginBottom: 8, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
+                <Sparkles size={16} style={{ color: C.gold }} />
+                <span>AI Compliance Audit</span>
+              </div>
+              <p style={{ fontSize: "0.82rem", color: C.muted, lineHeight: 1.6, marginBottom: 16, fontWeight: 500 }}>
+                Generates a detailed regulatory report outlining specific legal exposure and applicable penalties under the Tax Procedures Code Act.
+              </p>
+              <Button onClick={generateReport} disabled={aiLoading} style={{ width: "100%", justifyContent: "center" }}>
+                {aiLoading ? "⟳ Auditing Checklists..." : "Generate Risk Report"}
+              </Button>
+              
+              {aiReport && (
+                <div
+                  style={{
+                    marginTop: 18,
+                    background: C.offwhite,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 10,
+                    padding: 16,
+                    fontSize: "0.82rem",
+                    color: C.text,
+                    lineHeight: 1.7,
+                    maxHeight: 280,
+                    overflowY: "auto",
+                    whiteSpace: "pre-wrap",
+                    fontFamily: "inherit"
+                  }}
+                >
+                  {aiReport}
+                </div>
+              )}
+            </Card>
+
+            {pastReports.length > 0 && (
+              <Card style={{ padding: 24 }}>
+                <div style={{ fontWeight: 800, color: C.navy, marginBottom: 14, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 8 }}>
+                  <FolderOpen size={16} style={{ color: C.teal }} />
+                  <span>Historic Audits</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 180, overflowY: "auto" }}>
+                  {pastReports.map((report) => (
+                    <div
+                      key={report.id}
+                      onClick={() => loadPastReport(report)}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: 8,
+                        background: C.white,
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        border: `1.5px solid ${C.border}`,
+                        transition: "all 0.2s"
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.borderColor = C.teal;
+                        e.currentTarget.style.background = C.offwhite;
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.borderColor = C.border;
+                        e.currentTarget.style.background = C.white;
+                      }}
+                    >
+                      <div>
+                        <strong style={{ color: C.navy, textTransform: "uppercase" }}>{report.type}</strong>
+                        <span style={{ color: C.muted, marginLeft: 6 }}>({report.score}%)</span>
+                      </div>
+                      <div style={{ color: C.muted, fontSize: "0.72rem", fontWeight: 600 }}>
+                        {new Date(report.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 };
