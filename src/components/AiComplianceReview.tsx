@@ -373,7 +373,7 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
     select: {
       fontSize: "0.825rem",
       fontWeight: 700,
-      color: C.navy,
+      color: C.text,
       background: "transparent",
       border: "none",
       outline: "none",
@@ -559,10 +559,10 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
               }}
             >
               {companies.length === 0 ? (
-                <option value="" disabled>No companies registered</option>
+                <option value="" disabled style={{ background: "var(--color-white)", color: "var(--color-muted)" }}>No companies registered</option>
               ) : (
                 companies.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id} style={{ background: "var(--color-white)", color: "var(--color-text)" }}>{c.name}</option>
                 ))
               )}
             </select>
@@ -587,10 +587,10 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
               }}
             >
               {periods.map(p => (
-                <option key={p.id} value={p.period_name}>{p.period_name}</option>
+                <option key={p.id} value={p.period_name} style={{ background: "var(--color-white)", color: "var(--color-text)" }}>{p.period_name}</option>
               ))}
-              <option value="2026-06">2026-06</option>
-              <option value="2026-07">2026-07</option>
+              <option value="2026-06" style={{ background: "var(--color-white)", color: "var(--color-text)" }}>2026-06</option>
+              <option value="2026-07" style={{ background: "var(--color-white)", color: "var(--color-text)" }}>2026-07</option>
             </select>
             <button 
               onClick={() => setShowCreatePeriod(true)}
@@ -863,7 +863,18 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
         </div>
 
         {/* 3. Right Block: Core Compliance Assessment Screen */}
-        <div style={{ gridColumn: "span 8", display: "flex", flexDirection: "column", gap: 24 }} className="col-span-12 lg:col-span-8">
+        <div 
+          style={{ 
+            gridColumn: "span 8", 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: 24, 
+            position: "sticky", 
+            top: 24, 
+            alignSelf: "start" 
+          }} 
+          className="col-span-12 lg:col-span-8"
+        >
           
           {/* Review trigger CTA when no active review exists */}
           {!reviewResult && !reviewing && (
