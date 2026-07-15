@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { supabase } from "../lib/supabaseClient";
 import { LayoutDashboard, Settings, LogOut, ChevronDown, Scale, Search, Car, Calculator, GraduationCap, ShieldCheck, Mail, Check, Star, FileText, Cpu, TrendingUp, Clock, Building2, Globe, Sparkles, AlertTriangle } from "lucide-react";
 import { AiFAB } from "./AiFAB";
+import { LegalPortal } from "./LegalPortal";
 
 // Animated Counting Number Component
 const CountingNumber: React.FC<{ value: string; duration?: number }> = ({ value, duration = 1500 }) => {
@@ -140,17 +141,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
     calculators: "6"
   });
 
+  const [legalOpen, setLegalOpen] = useState(false);
+  const [legalTab, setLegalTab] = useState<"privacy" | "terms" | "blog">("privacy");
+
   const handleFooterLinkClick = (link: string) => {
     if (link === "hello@taxwise.cloud") {
-      window.location.href = "mailto:hello@taxwise.cloud";
+      window.location.href = `mailto:${settings.topbar_email || "hello@taxwise.cloud"}`;
       return;
     }
 
-    if (link === "About Us" || link === "Contact Us") {
-      const element = document.getElementById("features");
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+    if (link === "Contact Us") {
+      window.location.href = `mailto:${settings.topbar_email || "hello@taxwise.cloud"}`;
+      return;
+    }
+
+    if (link === "Privacy Policy") {
+      setLegalTab("privacy");
+      setLegalOpen(true);
+      return;
+    }
+
+    if (link === "Terms of Use" || link === "Terms of Service") {
+      setLegalTab("terms");
+      setLegalOpen(true);
+      return;
+    }
+
+    if (link === "Legal Blog") {
+      setLegalTab("blog");
+      setLegalOpen(true);
       return;
     }
 
@@ -164,7 +183,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
       "WHT Rates Tool": "calculators",
       "Import Duty": "calculators",
       "Pricing Plans": "pricing",
-      "Legal Blog": "intelligence",
       "Knowledge Base": "education"
     };
 
@@ -1487,7 +1505,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             {[
               { heading: "Products", links: ["Case Analyzer", "Compliance Check", "TAT Precedents", "Client Reports"] },
               { heading: "Calculators", links: ["PAYE Calculator", "VAT Calculator", "WHT Rates Tool", "Import Duty"] },
-              { heading: "Company", links: ["About Us", "Pricing Plans", "Legal Blog", "Contact Us"] },
+              { heading: "Company", links: ["Pricing Plans", "Legal Blog", "Contact Us"] },
               { heading: "Support", links: ["Knowledge Base", "hello@taxwise.cloud", "Privacy Policy", "Terms of Use"] },
             ].map(col => (
               <div key={col.heading}>
@@ -1516,6 +1534,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
         </div>
       </footer>
       <AiFAB currentPage="landing" dbUser={dbUser} />
+      <LegalPortal isOpen={legalOpen} onClose={() => setLegalOpen(false)} initialTab={legalTab} />
     </div>
   );
 };

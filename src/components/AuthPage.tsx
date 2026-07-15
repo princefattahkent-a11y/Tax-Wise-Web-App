@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { C } from "../lib/constants";
+import { LegalPortal } from "./LegalPortal";
 import { Card, Button } from "./UI";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -364,6 +365,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("Tax Consultant");
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(false);
+  const [legalTab, setLegalTab] = useState<"privacy" | "terms" | "blog">("privacy");
 
   // Reset-code mode
   const [newPassword, setNewPassword] = useState("");
@@ -1331,7 +1334,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
                         onChange={(e) => { setAgreeTerms(e.target.checked); setFieldErrors(f => ({ ...f, agreeTerms: undefined })); }}
                       />
                       <label htmlFor="agreeTerms" style={{ cursor: "pointer", fontSize: "0.78rem", color: C.muted, fontWeight: 500, lineHeight: 1.5, userSelect: "none" }}>
-                        I agree to the <a href="#" className="terms-link">Terms of Service</a> and <a href="#" className="terms-link">Privacy Policy</a>
+                        I agree to the <a href="#" className="terms-link" onClick={(e) => { e.preventDefault(); setLegalTab("terms"); setLegalOpen(true); }}>Terms of Service</a> and <a href="#" className="terms-link" onClick={(e) => { e.preventDefault(); setLegalTab("privacy"); setLegalOpen(true); }}>Privacy Policy</a>
                       </label>
                     </div>
                     {fieldErrors.agreeTerms && (
@@ -1369,6 +1372,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onBack, init
           </Card>
         </div>
       </div>
+      <LegalPortal isOpen={legalOpen} onClose={() => setLegalOpen(false)} initialTab={legalTab} />
     </div>
   );
 };
