@@ -7,6 +7,7 @@ import { Card } from "./UI";
 import { supabase } from "../lib/supabaseClient";
 import { CorporateTaxCalculator } from "./CorporateTaxCalculator";
 import { PayeCalculator } from "./PayeCalculator";
+import { RentalTaxCalculator } from "./RentalTaxCalculator";
 import { calculatePaye } from "../lib/tax/paye";
 
 interface CalculatorTab {
@@ -74,6 +75,17 @@ const calculatorTabs: CalculatorTab[] = [
     helper: "Helpful for year-end planning and provisional tax discussions.",
     inputLabel: "Taxable profit (UGX)",
     inputValue: 120000000,
+    inputMin: 0,
+    format: (value: number) => `UGX ${Math.round(value).toLocaleString()}`,
+  },
+  {
+    id: "rental",
+    title: "Rental Tax",
+    description: "URA rental income tax obligations for individuals, companies, or joint assets.",
+    accent: C.gold,
+    helper: "Check progressive individual rates, 50% corporate write-offs, and partnership shares.",
+    inputLabel: "Gross annual rental income (UGX)",
+    inputValue: 12000000,
     inputMin: 0,
     format: (value: number) => `UGX ${Math.round(value).toLocaleString()}`,
   },
@@ -281,6 +293,19 @@ export const CalculatorsPortal: React.FC = () => {
                   </div>
                 </div>
                 <PayeCalculator />
+              </div>
+            </Card>
+          ) : activeTab === "rental" ? (
+            <Card style={{ padding: 28 }} hover>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap", borderBottom: `1px solid ${C.border}`, paddingBottom: 16 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: activeCalculator.accent, marginTop: 6 }} />
+                  <div>
+                    <div style={{ fontSize: "1.15rem", fontWeight: 800, color: C.navy }}>{activeCalculator.title}</div>
+                    <div style={{ color: C.muted, fontSize: "0.95rem", marginTop: 4 }}>{activeCalculator.description}</div>
+                  </div>
+                </div>
+                <RentalTaxCalculator />
               </div>
             </Card>
           ) : (
