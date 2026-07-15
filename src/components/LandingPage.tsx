@@ -140,6 +140,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
     calculators: "6"
   });
 
+  const handleFooterLinkClick = (link: string) => {
+    if (link === "hello@taxwise.cloud") {
+      window.location.href = "mailto:hello@taxwise.cloud";
+      return;
+    }
+
+    if (link === "About Us" || link === "Contact Us") {
+      const element = document.getElementById("features");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+      return;
+    }
+
+    const pageMap: Record<string, string> = {
+      "Case Analyzer": "analyzer",
+      "Compliance Check": "compliance",
+      "TAT Precedents": "library",
+      "Client Reports": "analyzer",
+      "PAYE Calculator": "calculators",
+      "VAT Calculator": "calculators",
+      "WHT Rates Tool": "calculators",
+      "Import Duty": "calculators",
+      "Pricing Plans": "pricing",
+      "Legal Blog": "intelligence",
+      "Knowledge Base": "education"
+    };
+
+    const targetPage = pageMap[link];
+    if (targetPage && onNavigate) {
+      onNavigate(targetPage);
+    } else {
+      onGetStarted();
+    }
+  };
+
   // Fetch admin-controlled site settings & dynamic counts from database
   useEffect(() => {
     const fetchSettingsAndStats = async () => {
@@ -1459,7 +1495,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
                   {col.links.map(link => (
                     <li key={link}>
-                      <button onClick={onGetStarted} className="tw-footer-link" style={{ color: "rgba(255,255,255,.6)", fontSize: ".82rem", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0, transition: "color .2s", textAlign: "left", fontWeight: 500 }}>{link}</button>
+                      <button 
+                        onClick={() => handleFooterLinkClick(link)} 
+                        className="tw-footer-link" 
+                        style={{ color: "rgba(255,255,255,.6)", fontSize: ".82rem", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0, transition: "color .2s", textAlign: "left", fontWeight: 500 }}
+                      >
+                        {link}
+                      </button>
                     </li>
                   ))}
                 </ul>
