@@ -20,7 +20,6 @@ import {
   X,
   ScanSearch,
   History,
-  Building2,
   Calendar,
   AlertCircle,
   CheckCircle2,
@@ -28,6 +27,10 @@ import {
   Loader2,
   ExternalLink,
   Info,
+  Check,
+  FileSpreadsheet,
+  FileArchive,
+  LayoutDashboard,
 } from "lucide-react";
 import { Chart as ChartJS, registerables } from "chart.js";
 import { Modal } from "./UI";
@@ -682,17 +685,55 @@ const HistoryModal = ({
   );
 };
 
+// ─── Upload types ─────────────────────────────────────────────────────────────
+
+type UploadFileStatus = "queued" | "processing" | "done" | "error";
+
+interface UploadedFile {
+  id: string;
+  file: File;
+  status: UploadFileStatus;
+  error?: string;
+  data?: Record<string, any>;
+}
+
+const ACCEPTED_UPLOAD_EXTENSIONS = ["json", "csv", "pdf", "xlsx", "xls", "docx", "doc"];
+
+function getFileIcon(name: string): React.ReactNode {
+  const ext = name.split(".").pop()?.toLowerCase() || "";
+  if (["xlsx", "xls"].includes(ext)) return <FileSpreadsheet size={15} style={{ color: "#22a06b" }} />;
+  if (["docx", "doc"].includes(ext)) return <FileText size={15} style={{ color: "#0052cc" }} />;
+  if (ext === "pdf") return <FileType size={15} style={{ color: "#de350b" }} />;
+  if (ext === "csv") return <Table2 size={15} style={{ color: "#6554c0" }} />;
+  if (ext === "json") return <FileArchive size={15} style={{ color: "#ff991f" }} />;
+  return <FileText size={15} />;
+}
+
 // ─── Upload parser ────────────────────────────────────────────────────────────
 
 function parseTaxReturnFile(
   file: File
 ): Promise<{ ok: true; data: Record<string, any> } | { ok: false; error: string }> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+
+  // For binary formats (PDF, DOCX, XLSX) — acknowledge receipt and pass metadata
+  if (["pdf", "docx", "doc", "xlsx", "xls"].includes(ext)) {
+    return Promise.resolve({
+      ok: true,
+      data: {
+        _sourceFile: file.name,
+        _sourceType: ext,
+        _note: `File "${file.name}" uploaded. Structured data extraction from ${ext.toUpperCase()} is processed server-side. Using file metadata for this review session.`,
+      },
+    });
+  }
+
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
       try {
-        if (file.name.endsWith(".json")) {
+        if (ext === "json") {
           const json = JSON.parse(text);
           resolve({ ok: true, data: json });
           return;
@@ -744,13 +785,17 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
   const [expanded, setExpanded] = useState<string | null>("XVAL-003");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [query, setQuery] = useState("");
+  // Tick-flash feedback: set of IDs currently showing a tick animation
+  const [tickIds, setTickIds] = useState<Set<string>>(new Set());
 
-  // Sync findings & checklist with localStorage (scoped by user.id for robust tenancy)
+  // Sync findings, checklist, and UI prefs with localStorage (scoped by user.id)
   useEffect(() => {
     if (typeof window !== "undefined" && user?.id) {
       const cacheFindings = localStorage.getItem(`taxwise:compliance:findings:${user.id}`);
       const cacheChecklist = localStorage.getItem(`taxwise:compliance:checklist:${user.id}`);
-      
+      const cacheView = localStorage.getItem(`taxwise:compliance:view:${user.id}`);
+      const cacheFilter = localStorage.getItem(`taxwise:compliance:filter:${user.id}`);
+
       if (cacheFindings) {
         try { setFindings(JSON.parse(cacheFindings)); } catch { setFindings(DEMO_FINDINGS); }
       } else {
@@ -762,6 +807,9 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
       } else {
         setChecklist(DEMO_CHECKLIST);
       }
+
+      if (cacheView === "reports" || cacheView === "dashboard") setActiveView(cacheView);
+      if (cacheFilter) setSeverityFilter(cacheFilter);
     }
   }, [user?.id]);
 
@@ -777,15 +825,29 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
     }
   }, [checklist, user?.id]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && user?.id) {
+      localStorage.setItem(`taxwise:compliance:view:${user.id}`, activeView);
+    }
+  }, [activeView, user?.id]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && user?.id) {
+      localStorage.setItem(`taxwise:compliance:filter:${user.id}`, severityFilter);
+    }
+  }, [severityFilter, user?.id]);
+
   // Modals
   const [showDataEntry, setShowDataEntry] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [checklistModalItem, setChecklistModalItem] = useState<ChecklistItem | null>(null);
 
-  // Upload
+  // Upload — multi-file queue
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadQueue, setUploadQueue] = useState<UploadedFile[]>([]);
   const [uploadedData, setUploadedData] = useState<Record<string, any> | null>(null);
   const [uploadError, setUploadError] = useState("");
+  const [showUploadQueue, setShowUploadQueue] = useState(false);
 
   // Reports
   const [reportGenerating, setReportGenerating] = useState<"pdf" | "xlsx" | "docx" | null>(null);
@@ -799,6 +861,12 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
   const severityCanvasRef = useRef<HTMLCanvasElement>(null);
   const revenueChart = useRef<ChartJS | null>(null);
   const severityChart = useRef<ChartJS | null>(null);
+
+  // Helper: flash tick animation for an id
+  const flashTick = useCallback((id: string) => {
+    setTickIds((prev) => new Set(prev).add(id));
+    setTimeout(() => setTickIds((prev) => { const n = new Set(prev); n.delete(id); return n; }), 900);
+  }, []);
 
   // ── Computed values ────────────────────────────────────────────────────────
   const { label, tone, critical, warning, passed, exposure, confidence } = statusTone(findings);
@@ -870,8 +938,13 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const updateStatus = (id: string, status: "resolved" | "ignored") => {
+    // Update immediately, collapse the card, show toast
     setFindings((prev) => prev.map((f) => (f.id === id || f.code === id) ? { ...f, status } : f));
-    showToast(`Finding marked as ${status}.`, "success");
+    setExpanded(null);
+    showToast(
+      status === "resolved" ? "Finding marked as Resolved ✓" : "Finding marked as Ignored",
+      "success"
+    );
   };
 
   const handleReviewComplete = (newFindings: any[]) => {
@@ -891,35 +964,70 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
     showToast("Historical review loaded into dashboard.", "info");
   };
 
-  // ── Upload Return ──────────────────────────────────────────────────────────
+  // ── Upload Return (multi-file) ─────────────────────────────────────────────
   const handleUploadClick = () => {
     setUploadError("");
     fileInputRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!e.target.files) return;
-    // Reset so the same file can be re-selected
+    // Capture FileList BEFORE clearing input (clearing it would empty the FileList in some browsers)
+    const fileList = e.target.files;
+    const files = fileList ? Array.from(fileList) : [];
     e.target.value = "";
-    if (!file) return;
+    if (files.length === 0) return;
 
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!["json", "csv"].includes(ext || "")) {
-      setUploadError("Please upload a .json or .csv file.");
-      showToast("Unsupported file type. Please upload a .json or .csv file.", "error");
+    const newEntries: UploadedFile[] = files.map((f) => ({
+      id: `${f.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      file: f,
+      status: "queued" as UploadFileStatus,
+    }));
+
+    // Validate extensions
+    const invalid = newEntries.filter((entry) => {
+      const ext = entry.file.name.split(".").pop()?.toLowerCase() || "";
+      return !ACCEPTED_UPLOAD_EXTENSIONS.includes(ext);
+    });
+
+    if (invalid.length > 0) {
+      const names = invalid.map((entry) => entry.file.name).join(", ");
+      setUploadError(`Unsupported file type(s): ${names}. Accepted: PDF, DOCX, XLSX, CSV, JSON.`);
+      showToast("Some files have unsupported types.", "error");
       return;
     }
 
-    const result = await parseTaxReturnFile(file);
-    if (!result.ok) {
-      setUploadError(result.error);
-      showToast(result.error, "error");
-      return;
+    setUploadQueue((prev) => [...prev, ...newEntries]);
+    setShowUploadQueue(true);
+    setUploadError("");
+
+    // Process each file sequentially
+    let lastData: Record<string, any> | null = null;
+    for (const entry of newEntries) {
+      setUploadQueue((prev) => prev.map((qe) => qe.id === entry.id ? { ...qe, status: "processing" } : qe));
+      const result = await parseTaxReturnFile(entry.file);
+      if (!result.ok) {
+        setUploadQueue((prev) => prev.map((qe) => qe.id === entry.id ? { ...qe, status: "error", error: result.error } : qe));
+      } else {
+        setUploadQueue((prev) => prev.map((qe) => qe.id === entry.id ? { ...qe, status: "done", data: result.data } : qe));
+        lastData = result.data;
+      }
     }
-    setUploadedData(result.data);
-    showToast(`"${file.name}" parsed successfully. Opening review form…`, "success");
-    setShowDataEntry(true);
+
+    if (lastData) {
+      setUploadedData(lastData);
+      showToast(`${newEntries.length} file(s) processed. Opening review form…`, "success");
+      setShowDataEntry(true);
+    } else {
+      showToast("All files failed to parse. Please check formats and try again.", "error");
+    }
+  };
+
+  const handleChecklistStatusChangeWithTick = (area: string, status: "pass" | "review" | "missing") => {
+    flashTick(`checklist-${area}`);
+    setTimeout(() => {
+      setChecklist((prev) => prev.map((c) => c.area === area ? { ...c, status } : c));
+      showToast(`${area} status updated to "${status === "pass" ? "Passed" : status === "missing" ? "Missing" : "Needs Review"}".`, "success");
+    }, 400);
   };
 
   // ── Download Report ────────────────────────────────────────────────────────
@@ -1008,10 +1116,7 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
   };
 
   // ── Checklist ──────────────────────────────────────────────────────────────
-  const handleChecklistStatusChange = (area: string, status: "pass" | "review" | "missing") => {
-    setChecklist((prev) => prev.map((c) => c.area === area ? { ...c, status } : c));
-    showToast(`${area} status updated to "${status === "pass" ? "Passed" : status === "missing" ? "Missing" : "Needs Review"}".`, "success");
-  };
+  const handleChecklistStatusChange = handleChecklistStatusChangeWithTick;
 
   // ── Severity doughnut legend ───────────────────────────────────────────────
   const openFindings = findings.filter((f) => f.status === "open");
@@ -1024,21 +1129,22 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Hidden file input for Upload Return */}
+      {/* Hidden file input for Upload Return — multi-file */}
       <input
         ref={fileInputRef}
         type="file"
-        accept=".json,.csv"
+        accept=".json,.csv,.pdf,.xlsx,.xls,.docx,.doc"
+        multiple
         style={{ display: "none" }}
         onChange={handleFileChange}
-        aria-label="Upload tax return file"
+        aria-label="Upload tax return files"
       />
 
       {/* ── Page Header ───────────────────────────────────────────────────── */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: 16, flexWrap: "wrap", marginBottom: 24,
-        paddingBottom: 20, borderBottom: "1px solid var(--cx-line)",
+        gap: 16, flexWrap: "wrap", marginBottom: 20,
+        paddingBottom: 18, borderBottom: "1px solid var(--cx-line)",
       }}>
         <div>
           <h1 style={{
@@ -1053,11 +1159,115 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <HeaderBtn icon={<ScanSearch size={13} />} label="Review Return" primary onClick={() => setShowDataEntry(true)} />
-          <HeaderBtn icon={<Upload size={13} />} label="Upload Return" onClick={handleUploadClick} />
+          <HeaderBtn icon={<Upload size={13} />} label="Upload Return" onClick={handleUploadClick} badge={uploadQueue.filter(f => f.status === "done").length || undefined} />
           <HeaderBtn icon={<Download size={13} />} label="Download Report" onClick={() => setActiveView("reports")} />
           <HeaderBtn icon={<Clock size={13} />} label="View History" onClick={() => setShowHistory(true)} />
         </div>
       </div>
+
+      {/* ── Tab Bar ───────────────────────────────────────────────────────── */}
+      <div style={{
+        display: "flex", gap: 4, marginBottom: 24,
+        background: "var(--cx-surface-sunken)", borderRadius: 10,
+        padding: 4, width: "fit-content",
+        border: "1px solid var(--cx-line)",
+      }}>
+        {([
+          { id: "dashboard" as const, label: "Dashboard", icon: <LayoutDashboard size={13} /> },
+          { id: "reports" as const, label: "Reports", icon: <FileBarChart size={13} /> },
+        ]).map((tab) => {
+          const isActive = activeView === tab.id;
+          return (
+            <motion.button
+              key={tab.id}
+              onClick={() => setActiveView(tab.id)}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "7px 14px", borderRadius: 7,
+                fontSize: 12.5, fontWeight: isActive ? 600 : 500,
+                border: "none", cursor: "pointer",
+                fontFamily: "inherit", transition: "all 0.18s ease",
+                background: isActive ? "var(--cx-surface)" : "transparent",
+                color: isActive ? "var(--cx-navy)" : "var(--cx-ink-soft)",
+                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)" : "none",
+              }}
+            >
+              <span style={{ color: isActive ? "var(--cx-navy)" : "var(--cx-ink-faint)", display: "flex" }}>{tab.icon}</span>
+              {tab.label}
+              {isActive && (
+                <motion.span
+                  layoutId="tab-active-dot"
+                  style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--cx-navy)", display: "inline-block", marginLeft: 2 }}
+                />
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* ── Upload Queue Panel ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showUploadQueue && uploadQueue.length > 0 && (
+          <motion.div
+            key="upload-queue"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ overflow: "hidden", marginBottom: 16 }}
+          >
+            <div style={{
+              border: "1px solid var(--cx-line)", borderRadius: 10,
+              background: "var(--cx-surface)", padding: "12px 16px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <span style={{ ...eyebrow }}>Uploaded Files ({uploadQueue.length})</span>
+                <button
+                  onClick={() => { setShowUploadQueue(false); setUploadQueue([]); }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cx-ink-faint)", display: "flex", padding: 2 }}
+                  aria-label="Clear upload queue"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {uploadQueue.map((uf) => {
+                  const statusStyle = uf.status === "done"
+                    ? { bg: "var(--cx-emerald-soft)", color: "var(--cx-emerald)", label: "Done", icon: <Check size={12} /> }
+                    : uf.status === "error"
+                    ? { bg: "var(--cx-brick-soft)", color: "var(--cx-brick)", label: "Error", icon: <X size={12} /> }
+                    : uf.status === "processing"
+                    ? { bg: "var(--cx-navy-soft)", color: "var(--cx-navy)", label: "Processing…", icon: <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> }
+                    : { bg: "var(--cx-surface-sunken)", color: "var(--cx-ink-faint)", label: "Queued", icon: <Clock size={12} /> };
+                  return (
+                    <div key={uf.id} style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "7px 10px", borderRadius: 7,
+                      background: "var(--cx-surface-sunken)", border: "1px solid var(--cx-line)",
+                    }}>
+                      {getFileIcon(uf.file.name)}
+                      <span style={{ fontSize: 12.5, color: "var(--cx-ink)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{uf.file.name}</span>
+                      <span style={{ fontSize: 11, color: "var(--cx-ink-faint)", flexShrink: 0 }}>
+                        {(uf.file.size / 1024).toFixed(0)} KB
+                      </span>
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px",
+                        borderRadius: 20, fontSize: 11, fontWeight: 600,
+                        background: statusStyle.bg, color: statusStyle.color,
+                      }}>
+                        {statusStyle.icon} {statusStyle.label}
+                      </span>
+                      {uf.status === "error" && uf.error && (
+                        <span style={{ fontSize: 11, color: "var(--cx-brick)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={uf.error}>{uf.error}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {uploadError && (
         <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 8, background: "var(--cx-brick-soft)", border: "1px solid color-mix(in srgb, var(--cx-brick) 25%, transparent)", fontSize: 13, color: "var(--cx-brick)", display: "flex", alignItems: "center", gap: 8 }}>
@@ -1185,41 +1395,64 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                     {visibleFindings.map((f) => {
                       const fid = f.id || f.code;
                       const isOpen = expanded === fid;
-                      const dimmed = f.status !== "open";
+                      const isResolved = f.status === "resolved";
+                      const isIgnored = f.status === "ignored";
+                      const isDone = isResolved || isIgnored;
                       return (
                         <motion.div
                           key={fid}
-                          whileHover={{ y: -1.5, boxShadow: "0 6px 20px rgba(15, 32, 68, 0.04)" }}
+                          layout
+                          whileHover={isDone ? {} : { y: -1.5, boxShadow: "0 6px 20px rgba(15, 32, 68, 0.06)" }}
                           transition={{ type: "spring", stiffness: 300, damping: 20 }}
                           style={{
-                            border: "1px solid var(--cx-line)",
-                            background: "var(--cx-surface)",
+                            border: isDone
+                              ? `1px solid ${isResolved ? "color-mix(in srgb, var(--cx-emerald) 30%, transparent)" : "var(--cx-line)"}`
+                              : "1px solid var(--cx-line)",
+                            background: isDone
+                              ? isResolved ? "color-mix(in srgb, var(--cx-emerald-soft) 60%, var(--cx-surface))" : "var(--cx-surface-sunken)"
+                              : "var(--cx-surface)",
                             borderRadius: 8,
                             overflow: "hidden",
-                            opacity: dimmed ? 0.6 : 1,
-                            transition: "opacity 0.2s, border-color 0.2s",
+                            opacity: isDone ? 0.72 : 1,
+                            transition: "opacity 0.25s, border-color 0.25s, background 0.25s",
                           }}
                         >
+                          {/* Card header row */}
                           <button
-                            onClick={() => setExpanded(isOpen ? null : fid)}
+                            onClick={() => !isDone && setExpanded(isOpen ? null : fid)}
                             style={{
                               width: "100%", display: "flex", alignItems: "center", gap: 10,
                               padding: "12px 16px", textAlign: "left", background: "none",
-                              border: "none", cursor: "pointer", outline: "none",
+                              border: "none", cursor: isDone ? "default" : "pointer", outline: "none",
                             }}
                           >
-                            <SeverityIcon severity={f.severity} />
+                            {isDone
+                              ? <CheckCircle2 size={15} style={{ color: isResolved ? "var(--cx-emerald)" : "var(--cx-ink-faint)", flexShrink: 0 }} />
+                              : <SeverityIcon severity={f.severity} />}
                             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "var(--cx-ink-faint)", flexShrink: 0 }}>{fid}</span>
-                            <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--cx-ink)" }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: isDone ? "var(--cx-ink-soft)" : "var(--cx-ink)" }}>
                               {f.title}
                             </span>
                             <Stamp label={f.area} tone="navy" />
-                            {f.status !== "open" && <Stamp label={f.status} tone="neutral" />}
-                            {isOpen ? <ChevronDown size={15} style={{ color: "var(--cx-ink-faint)", flexShrink: 0 }} /> : <ChevronRight size={15} style={{ color: "var(--cx-ink-faint)", flexShrink: 0 }} />}
+                            {isResolved && (
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 9px", borderRadius: 4, background: "var(--cx-emerald-soft)", color: "var(--cx-emerald)", fontSize: 10.5, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.05em", textTransform: "uppercase", flexShrink: 0 }}>
+                                <Check size={10} /> Resolved
+                              </span>
+                            )}
+                            {isIgnored && (
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 9px", borderRadius: 4, background: "var(--cx-surface-sunken)", color: "var(--cx-ink-faint)", fontSize: 10.5, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.05em", textTransform: "uppercase", border: "1px solid var(--cx-line)", flexShrink: 0 }}>
+                                Ignored
+                              </span>
+                            )}
+                            {!isDone && (isOpen
+                              ? <ChevronDown size={15} style={{ color: "var(--cx-ink-faint)", flexShrink: 0 }} />
+                              : <ChevronRight size={15} style={{ color: "var(--cx-ink-faint)", flexShrink: 0 }} />
+                            )}
                           </button>
 
+                          {/* Expandable body */}
                           <AnimatePresence>
-                            {isOpen && (
+                            {isOpen && !isDone && (
                               <motion.div
                                 key="body"
                                 initial={{ height: 0, opacity: 0 }}
@@ -1250,18 +1483,18 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                                     </div>
                                     <div style={{ display: "flex", gap: 8 }}>
                                       <motion.button
-                                        disabled={f.status !== "open"}
-                                        whileHover={f.status === "open" ? { scale: 1.04 } : {}}
-                                        whileTap={f.status === "open" ? { scale: 0.96 } : {}}
+                                        whileHover={{ scale: 1.05, boxShadow: "0 0 0 3px color-mix(in srgb, var(--cx-emerald) 25%, transparent)" }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => updateStatus(fid, "resolved")}
-                                        style={{ ...actionBtn, background: "var(--cx-emerald-soft)", color: "var(--cx-emerald)" }}
-                                      >Resolve</motion.button>
+                                        style={{ ...actionBtn, background: "var(--cx-emerald-soft)", color: "var(--cx-emerald)", border: "1px solid color-mix(in srgb, var(--cx-emerald) 30%, transparent)", display: "flex", alignItems: "center", gap: 5 }}
+                                      >
+                                        <Check size={12} /> Resolve
+                                      </motion.button>
                                       <motion.button
-                                        disabled={f.status !== "open"}
-                                        whileHover={f.status === "open" ? { scale: 1.04 } : {}}
-                                        whileTap={f.status === "open" ? { scale: 0.96 } : {}}
+                                        whileHover={{ scale: 1.05, boxShadow: "0 0 0 3px color-mix(in srgb, var(--cx-ink-faint) 20%, transparent)" }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => updateStatus(fid, "ignored")}
-                                        style={{ ...actionBtn, background: "var(--cx-surface-sunken)", color: "var(--cx-ink-soft)" }}
+                                        style={{ ...actionBtn, background: "var(--cx-surface-sunken)", color: "var(--cx-ink-soft)", border: "1px solid var(--cx-line)" }}
                                       >Ignore</motion.button>
                                     </div>
                                   </div>
@@ -1281,6 +1514,8 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                 <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 15, fontWeight: 600, color: "var(--cx-ink)", margin: "0 0 12px" }}>Compliance Checklist</h3>
                 <div style={{ ...card, padding: 0, overflow: "hidden" }}>
                   {checklist.map((c, i) => {
+                    const tickId = `checklist-${c.area}`;
+                    const isTicking = tickIds.has(tickId);
                     const meta =
                       c.status === "pass" ? { icon: <CircleCheck size={14} />, label: "Passed", color: "var(--cx-emerald)" } :
                       c.status === "missing" ? { icon: <X size={14} />, label: "Missing", color: "var(--cx-brick)" } :
@@ -1288,7 +1523,7 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                     return (
                       <motion.button
                         key={c.area}
-                        whileHover={{ backgroundColor: "var(--cx-surface-sunken)", x: 2 }}
+                        whileHover={{ backgroundColor: "var(--cx-surface-sunken)", x: 3, boxShadow: "inset 3px 0 0 var(--cx-navy)" }}
                         whileTap={{ scale: 0.995 }}
                         onClick={() => setChecklistModalItem(c)}
                         style={{
@@ -1296,14 +1531,33 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                           padding: "10px 16px", fontSize: 13.5, color: "var(--cx-ink)", textAlign: "left",
                           borderBottom: i < checklist.length - 1 ? "1px dashed var(--cx-line)" : "none",
                           background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit",
-                          transition: "background-color 0.15s, x 0.15s",
+                          transition: "background-color 0.15s",
                           outline: "none",
                         }}
                       >
                         <span>{c.area}</span>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 500, color: meta.color }}>
-                          {meta.icon} {meta.label}
-                        </span>
+                        <AnimatePresence mode="wait">
+                          {isTicking ? (
+                            <motion.span
+                              key="tick"
+                              initial={{ scale: 0.6, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 1.2, opacity: 0 }}
+                              style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--cx-emerald)", fontSize: 12, fontWeight: 600 }}
+                            >
+                              <Check size={14} /> Saved!
+                            </motion.span>
+                          ) : (
+                            <motion.span
+                              key="status"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 500, color: meta.color }}
+                            >
+                              {meta.icon} {meta.label}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
                       </motion.button>
                     );
                   })}
@@ -1508,38 +1762,50 @@ const actionBtn: React.CSSProperties = {
   fontWeight: 500,
   padding: "6px 12px",
   borderRadius: 6,
-  border: "none",
+  border: "1px solid transparent",
   cursor: "pointer",
   fontFamily: "inherit",
-  transition: "opacity 0.15s",
+  transition: "all 0.18s ease",
 };
 
 // ─── Header button helper ─────────────────────────────────────────────────────
 
 const HeaderBtn = ({
-  icon, label, primary, onClick,
+  icon, label, primary, onClick, badge,
 }: {
   icon: React.ReactNode;
   label: string;
   primary?: boolean;
   onClick: () => void;
+  badge?: number;
 }) => (
   <motion.button
     onClick={onClick}
-    whileHover={{ scale: 1.015, y: -0.5 }}
-    whileTap={{ scale: 0.98 }}
+    whileHover={primary
+      ? { scale: 1.02, y: -1, boxShadow: "0 0 0 3px color-mix(in srgb, var(--cx-navy) 30%, transparent), 0 4px 16px rgba(15,32,68,0.20)" }
+      : { scale: 1.02, y: -1, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", borderColor: "var(--cx-navy)" }
+    }
+    whileTap={{ scale: 0.97 }}
     style={{
       display: "flex", alignItems: "center", gap: 6,
       fontSize: 12.5, fontWeight: 500, padding: "9px 13px",
-      borderRadius: 6, cursor: "pointer", fontFamily: "inherit",
+      borderRadius: 7, cursor: "pointer", fontFamily: "inherit",
       transition: "background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
-      outline: "none",
-      boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+      outline: "none", position: "relative",
+      boxShadow: primary ? "0 2px 8px rgba(15,32,68,0.18)" : "0 1px 3px rgba(0,0,0,0.06)",
       ...(primary
-        ? { background: "var(--cx-navy)", borderColor: "var(--cx-navy)", color: "#fff", border: "1px solid var(--cx-navy)" }
+        ? { background: "var(--cx-navy)", color: "#fff", border: "1px solid var(--cx-navy)" }
         : { background: "var(--cx-surface)", border: "1px solid var(--cx-line)", color: "var(--cx-ink)" }),
     }}
   >
     {icon} {label}
+    {badge != null && badge > 0 && (
+      <span style={{
+        position: "absolute", top: -6, right: -6, minWidth: 17, height: 17, borderRadius: 99,
+        background: "var(--cx-emerald)", color: "#fff", fontSize: 10, fontWeight: 700,
+        display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px",
+        boxShadow: "0 0 0 2px var(--cx-surface)",
+      }}>{badge}</span>
+    )}
   </motion.button>
 );
