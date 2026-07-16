@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TaxWise AI Compliance Review — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<style>
+  /* ============================================================
+     Design tokens — identical to tailwind.config.ts / globals.css
+     in the real Next.js project, so this mockup matches what
+     actually ships. Light values on :root, dark values on .dark.
+     ============================================================ */
+  :root {
+    --bg: #F3F5F1; --surface: #FFFFFF; --surface-sunken: #ECEFE9;
+    --ink: #101E30; --ink-soft: #4C5C68; --ink-faint: #8B98A0; --line: #DADFD6;
+    --sidebar: #0F2036; --sidebar-soft: #B9C6D6; --sidebar-line: rgba(255,255,255,0.10);
+    --emerald: #0E7C5A; --emerald-soft: #E4F1EA; --amber: #A96A0B; --amber-soft: #F6EBD8;
+    --brick: #A23F2C; --brick-soft: #F5E4DF; --navy: #28466E; --navy-soft: #E6ECF3;
+    --font-display: 'Fraunces', serif; --font-sans: 'Inter', sans-serif; --font-mono: 'IBM Plex Mono', monospace;
+  }
+  html.dark {
+    --bg: #0A1420; --surface: #101E30; --surface-sunken: #0C1826;
+    --ink: #E9EEF2; --ink-soft: #9DACB8; --ink-faint: #66757F; --line: #213345;
+    --sidebar: #070D16; --sidebar-soft: #8494A5; --sidebar-line: rgba(255,255,255,0.08);
+    --emerald: #3FBE8E; --emerald-soft: #123326; --amber: #D6A03F; --amber-soft: #332711;
+    --brick: #DB7C64; --brick-soft: #331E17; --navy: #7FA6D6; --navy-soft: #152840;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  button, select, input { font-family: inherit; }
+  .app { display: flex; width: 100%; min-height: 100vh; }
+
+  /* ---------------------------------------------------------- Sidebar */
+  .sidebar {
+    position: fixed; top: 0; left: 0; z-index: 30; height: 100%; width: 248px;
+    background: var(--sidebar); display: flex; flex-direction: column;
+    transform: translateX(-100%); transition: transform .2s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-head { padding: 24px 20px 20px; border-bottom: 1px solid var(--sidebar-line); }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #fff;
+    background: linear-gradient(135deg, #1E8A63, #28466E); }
+  .brand-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: #fff; }
+  .brand-sub { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--sidebar-soft); }
+  .nav { flex: 1; overflow-y: auto; padding: 12px; }
+  .nav-item {
+    width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px;
+    font-size: 13.5px; margin-bottom: 2px; text-align: left; background: none; border: none;
+    border-left: 2px solid transparent; color: var(--sidebar-soft); cursor: pointer; transition: background .15s;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.05); }
+  .nav-item.active { background: rgba(255,255,255,.08); color: #fff; border-left-color: var(--emerald); }
+  .nav-item svg { flex-shrink: 0; }
+  .sidebar-foot { padding: 16px 20px; font-size: 11px; color: var(--sidebar-soft); border-top: 1px solid var(--sidebar-line); }
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 20; display: none; }
+  .scrim.show { display: block; }
+
+  /* ---------------------------------------------------------- Main / header */
+  .main { flex: 1; min-width: 0; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); padding: 16px 32px; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .menu-btn { display: none; background: none; border: none; color: var(--ink); padding: 8px; cursor: pointer; }
+  h1.page-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.2; }
+  .page-sub { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; padding: 9px 13px;
+    border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+  }
+  .btn-primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .btn-icon { padding: 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+
+  main.content { padding: 24px 32px; max-width: 1280px; }
+
+  /* ---------------------------------------------------------- Cards / stamps */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .stamp {
+    display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 2px; font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; transform: rotate(-.4deg);
+  }
+  .stamp.critical { color: var(--brick); background: var(--brick-soft); border: 1px solid color-mix(in srgb, var(--brick) 20%, transparent); }
+  .stamp.warning { color: var(--amber); background: var(--amber-soft); border: 1px solid color-mix(in srgb, var(--amber) 20%, transparent); }
+  .stamp.emerald { color: var(--emerald); background: var(--emerald-soft); border: 1px solid color-mix(in srgb, var(--emerald) 20%, transparent); }
+  .stamp.navy { color: var(--navy); background: var(--navy-soft); border: 1px solid color-mix(in srgb, var(--navy) 20%, transparent); }
+  .stamp.neutral { color: var(--ink-soft); background: var(--surface-sunken); border: 1px solid var(--line); }
+
+  .exec-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+  .status-row { display: flex; align-items: center; gap: 12px; }
+  .status-row h2 { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
+  .meta-note { font-size: 12px; color: var(--ink-soft); }
+
+  .summary-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .summary-card { flex: 1; min-width: 150px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  .summary-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); margin-bottom: 8px; }
+  .summary-value { font-family: var(--font-mono); font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .disclaimer { font-size: 12.5px; color: var(--ink-faint); margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+
+  .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin: 24px 0; }
+  .chart-card h3 { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; margin-bottom: 12px; }
+  .chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .chart-head span { font-size: 11px; color: var(--ink-faint); }
+  .legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--ink-soft); margin-top: 8px; }
+  .legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+  .body-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .section-head h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
+  .filters { display: flex; align-items: center; gap: 8px; }
+  .search-box { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); }
+  .search-box input { border: none; outline: none; background: transparent; font-size: 12.5px; color: var(--ink); width: 130px; }
+  .filters select { font-size: 12.5px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+
+  .finding-card { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  .finding-card.dimmed { opacity: .6; }
+  .finding-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-align: left; background: none; border: none; cursor: pointer; }
+  .finding-code { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .finding-title { font-size: 13px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+  .finding-body { padding: 4px 16px 16px; border-top: 1px dashed var(--line); }
+  .finding-desc { font-size: 13px; margin: 12px 0; color: var(--ink); }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .field-label { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 12.5px; color: var(--ink-soft); }
+  .finding-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .finding-meta { display: flex; gap: 16px; font-size: 12px; color: var(--ink-soft); }
+  .finding-meta b { font-family: var(--font-mono); color: var(--ink); }
+  .finding-actions { display: flex; gap: 8px; }
+  .action-btn { font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; }
+  .action-resolve { background: var(--emerald-soft); color: var(--emerald); }
+  .action-ignore { background: var(--surface-sunken); color: var(--ink-soft); }
+  .action-view { background: none; border: 1px solid var(--line); color: var(--ink); }
+  .action-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .empty-note { text-align: center; padding: 40px 0; font-size: 13px; color: var(--ink-faint); }
+
+  .checklist-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  .checklist-row { display: flex; align-items: center; justify-content: between; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+  .checklist-row:last-child { border-bottom: none; }
+  .checklist-status { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+
+  .generate-report-btn { width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 12.5px; font-weight: 500; padding: 10px; border-radius: 6px; background: var(--navy); color: #fff; border: none; cursor: pointer; }
+
+  .placeholder { border: 1px dashed var(--line); background: var(--surface); border-radius: 12px; padding: 40px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
+  .placeholder-icon { width: 44px; height: 44px; border-radius: 10px; background: var(--navy-soft); color: var(--navy); display: flex; align-items: center; justify-content: center; }
+  .placeholder h3 { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
+  .placeholder p { font-size: 13px; color: var(--ink-soft); max-width: 420px; }
+
+  .report-intro { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .report-intro h2 { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
+  .report-intro p { font-size: 13px; color: var(--ink-soft); }
+  .report-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .report-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; transition: border-color .15s; }
+  .report-card:hover { border-color: var(--navy); }
+  .report-card-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--navy-soft); color: var(--navy); display: flex; align-items: center; justify-content: center; }
+  .report-card-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
+  .report-card-desc { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+  .report-card-dl { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--navy); margin-top: 4px; }
+  .report-note { border: 1px dashed var(--line); background: var(--surface); border-radius: 12px; padding: 20px; margin-top: 24px; }
+  .report-note h3 { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; margin-bottom: 8px; }
+  .report-note p { font-size: 12.5px; color: var(--ink-soft); }
+
+  @media (min-width: 768px) {
+    .sidebar { position: static; height: auto; transform: none; }
+    .scrim { display: none !important; }
+    .menu-btn { display: none; }
+  }
+  @media (max-width: 767px) {
+    .menu-btn { display: flex; }
+    .charts-row, .body-grid, .report-grid { grid-template-columns: 1fr; }
+    header, main.content { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="brand">
+        <div class="brand-mark">T</div>
+        <div>
+          <div class="brand-name">TaxWise</div>
+          <div class="brand-sub">Uganda</div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">Rules engine: VAT Act Cap 349 · ITA Cap 340 · TPCA</div>
+  </aside>
+
+  <div class="main">
+    <header>
+      <div class="header-row">
+        <div class="header-left">
+          <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          </button>
+          <div>
+            <h1 class="page-title">TaxWise AI Compliance Review</h1>
+            <p class="page-sub">Identify compliance risks before filing.</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
+            Review Return
+          </button>
+          <button class="btn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Return
+          </button>
+          <button class="btn" id="downloadReportBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Report
+          </button>
+          <button class="btn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+            View History
+          </button>
+          <button class="btn-icon" id="darkToggle" aria-label="Toggle dark mode"></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Data — mirrors the fixtures used in the TypeScript codebase's
+   tests and seed script, so this mockup reflects real scenarios
+   the engine actually catches.
+   ============================================================ */
+const NAV_ITEMS = [
+  { key: "dashboard", label: "Dashboard", icon: "layout-grid" },
+  { key: "review", label: "Compliance Review", icon: "file-search" },
+  { key: "vat", label: "VAT Review", icon: "receipt" },
+  { key: "paye", label: "PAYE Review", icon: "users" },
+  { key: "incometax", label: "Income Tax", icon: "landmark" },
+  { key: "efris", label: "EFRIS", icon: "scan-line" },
+  { key: "financials", label: "Financial Statements", icon: "file-stack" },
+  { key: "documents", label: "Supporting Documents", icon: "paperclip" },
+  { key: "historical", label: "Historical Analysis", icon: "history" },
+  { key: "reports", label: "Reports", icon: "file-bar-chart" },
+  { key: "settings", label: "Settings", icon: "settings" },
+];
+
+let findings = [
+  { id: "XVAL-003", severity: "critical", area: "EFRIS", title: "Output VAT does not reconcile with EFRIS sales",
+    description: "Declared output VAT of UGX 18,240,000 is 11.4% lower than the output VAT implied by EFRIS-recorded sales for the same period.",
+    reason: "EFRIS receipts for June total UGX 214,600,000 in taxable supplies, implying output VAT of UGX 38,628,000 at 18%. The VAT return declares a taxable supply base of UGX 101,333,000.",
+    impact: "Possible inconsistency detected between EFRIS-issued receipts and the VAT return. This may require further review before filing.",
+    exposure: 2450000, confidence: 96, recommendation: "Reconcile the EFRIS sales export against the VAT working schedule line by line.",
+    legislation: "VAT Act Cap 349, s.16 & s.30", status: "open" },
+  { id: "PAYE-002", severity: "critical", area: "PAYE", title: "Two employees missing from PAYE schedule",
+    description: "Payroll register lists 47 active employees; PAYE schedule submitted for the period reflects 45.",
+    reason: "Employee IDs 0038 and 0041 appear in the payroll register with gross pay above the PAYE threshold but are absent from the PAYE computation schedule.",
+    impact: "This appears unusual and should be verified before filing.",
+    exposure: 640000, confidence: 91, recommendation: "Confirm whether employees 0038 and 0041 were engaged mid-period or excluded in error.",
+    legislation: "Income Tax Act Cap 340, s.116", status: "open" },
+  { id: "ITX-001", severity: "warning", area: "Income Tax", title: "Gross profit margin diverges from prior periods",
+    description: "Gross margin for the period is 18.2%, against a trailing three-period average of 27.6%.",
+    reason: "Cost of sales grew 34% period-on-period while revenue grew 4%, without a corresponding note in the financial statements.",
+    impact: "This may require further review — a material, unexplained margin shift is a common review trigger.",
+    exposure: 0, confidence: 78, recommendation: "Add a note to the financial statements explaining the cost movement.",
+    legislation: "Income Tax Act Cap 340, s.15", status: "open" },
+  { id: "VAT-001", severity: "warning", area: "VAT", title: "Input VAT claim on a supplier with no TIN on file",
+    description: "An input VAT claim of UGX 1,120,000 references supplier invoice INV-2291 with no TIN recorded in the supplier register.",
+    reason: "Supplier record 'Kase Hardware Ltd' has a blank TIN field.",
+    impact: "Possible inconsistency detected — claims against unverifiable suppliers are commonly disallowed.",
+    exposure: 1120000, confidence: 84, recommendation: "Obtain and record the supplier's TIN, or exclude the claim.",
+    legislation: "VAT Act Cap 349, s.28", status: "open" },
+  { id: "HIST-002", severity: "info", area: "Historical", title: "Third consecutive nil PAYE return",
+    description: "PAYE remittance has been nil for three consecutive months despite an active payroll register.",
+    reason: "Repeated nil returns alongside active payroll are flagged for pattern review.",
+    impact: "This appears unusual and should be verified before filing.",
+    exposure: 0, confidence: 72, recommendation: "Confirm whether payroll is genuinely below threshold.",
+    legislation: "Income Tax Act Cap 340, s.116", status: "resolved" },
+];
+
+const REVENUE_TREND = [
+  { period: "Feb", revenue: 182, vat: 33 }, { period: "Mar", revenue: 196, vat: 35 },
+  { period: "Apr", revenue: 174, vat: 31 }, { period: "May", revenue: 205, vat: 37 },
+  { period: "Jun", revenue: 214, vat: 39 }, { period: "Jul", revenue: 189, vat: 34 },
+];
+
+const CHECKLIST = [
+  { area: "VAT", status: "review" }, { area: "PAYE", status: "review" },
+  { area: "Income Tax", status: "review" }, { area: "EFRIS", status: "review" },
+  { area: "Financial Statements", status: "pass" }, { area: "Supporting Documents", status: "missing" },
+  { area: "NSSF Cross-Check", status: "pass" },
+];
+
+const REPORT_FORMATS = [
+  { key: "pdf", label: "PDF Report", desc: "A4, page numbers, cover page, ready to share with a client.", icon: "file-text" },
+  { key: "xlsx", label: "Excel Workbook", desc: "Summary, findings, financial impact, and checklist as separate sheets.", icon: "table" },
+  { key: "docx", label: "Word Document", desc: "Editable — useful when a practitioner wants to annotate before sending.", icon: "file-type" },
+];
+
+/* ============================================================ Icons (minimal inline SVGs, stroke style matches lucide) */
+const ICONS = {
+  "layout-grid": '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  "file-search": '<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v3.5"/><circle cx="12" cy="16" r="2.5"/><path d="M14 18l1.8 1.8"/>',
+  receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="13" y2="15"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  landmark: '<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 21 8 3 8"/>',
+  "scan-line": '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/>',
+  "file-stack": '<path d="M4 15V4a1 1 0 0 1 1-1h7l4 4v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"/><path d="M8 21h9a1 1 0 0 0 1-1v-9"/>',
+  paperclip: '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  history: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 5v5h5"/><path d="M12 7v5l4 2"/>',
+  "file-bar-chart": '<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><line x1="9" y1="17" x2="9" y2="13"/><line x1="12" y1="17" x2="12" y2="11"/><line x1="15" y1="17" x2="15" y2="15"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
+  "file-text": '<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>',
+  table: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/>',
+  "file-type": '<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9.5 13h2M10.5 13v5M13 18h2"/>',
+  check: '<polyline points="20 6 9 17 4 12"/>',
+  x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  "triangle-alert": '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  "shield-alert": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  "circle-check": '<circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/>',
+  "chevron-down": '<polyline points="6 9 12 15 18 9"/>',
+  "chevron-right": '<polyline points="9 18 15 12 9 6"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+};
+function icon(name, size = 16) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ""}</svg>`;
+}
+
+/* ============================================================ State */
+const state = { dark: false, active: "dashboard", expanded: "XVAL-003", severityFilter: "all", query: "", sidebarOpen: false };
+let revenueChartInstance = null, severityChartInstance = null;
+
+function fmtUGX(n) { return "UGX " + Math.round(n).toLocaleString("en-UG"); }
+
+function statusTone() {
+  const openFindings = findings.filter(f => f.status === "open");
+  const critical = openFindings.filter(f => f.severity === "critical").length;
+  const warning = openFindings.filter(f => f.severity === "warning").length;
+  if (critical > 0) return { label: "High Risk", tone: "critical", critical, warning };
+  if (warning > 0) return { label: "Review Required", tone: "warning", critical, warning };
+  return { label: "Ready to File", tone: "emerald", critical, warning };
+}
+
+/* ============================================================ Renderers */
+function renderNav() {
+  document.getElementById("nav").innerHTML = NAV_ITEMS.map(item => {
+    const isActive = state.active === item.key || (item.key === "dashboard" && state.active === "review");
+    return `<button class="nav-item ${isActive ? "active" : ""}" data-nav="${item.key}">${icon(item.icon)}${item.label}</button>`;
+  }).join("");
+}
+
+function renderHeaderButtons() {
+  document.getElementById("darkToggle").innerHTML = icon(state.dark ? "sun" : "moon", 15);
+}
+
+function summaryCard(label, value, toneVar) {
+  return `<div class="summary-card"><div class="summary-label">${label}</div><div class="summary-value" style="color:${toneVar || "var(--ink)"}">${value}</div></div>`;
+}
+
+function stamp(label, tone) {
+  return `<span class="stamp ${tone}">${label}</span>`;
+}
+
+function renderDashboard() {
+  const { label, tone, critical, warning } = statusTone();
+  const toneVar = { critical: "var(--brick)", warning: "var(--amber)", emerald: "var(--emerald)" }[tone];
+  const totalExposure = findings.filter(f => f.status === "open").reduce((s, f) => s + f.exposure, 0);
+
+  const visible = findings.filter(f => {
+    if (state.severityFilter !== "all" && f.severity !== state.severityFilter) return false;
+    if (state.query && !(f.title + f.area + f.id).toLowerCase().includes(state.query.toLowerCase())) return false;
+    return true;
+  });
+
+  const findingsHtml = visible.length ? visible.map(f => {
+    const isOpen = state.expanded === f.id;
+    const dimmed = f.status !== "open";
+    return `
+    <div class="finding-card ${dimmed ? "dimmed" : ""}">
+      <button class="finding-head" data-toggle="${f.id}">
+        ${icon(f.severity === "critical" ? "shield-alert" : f.severity === "warning" ? "triangle-alert" : "circle-check", 16)}
+        <span class="finding-code">${f.id}</span>
+        <span class="finding-title">${f.title}</span>
+        ${stamp(f.area, "navy")}
+        ${f.status !== "open" ? stamp(f.status, "neutral") : ""}
+        ${icon(isOpen ? "chevron-down" : "chevron-right", 16)}
+      </button>
+      ${isOpen ? `
+      <div class="finding-body">
+        <p class="finding-desc">${f.description}</p>
+        <div class="field-grid">
+          <div><div class="field-label">Why flagged</div><div class="field-value">${f.reason}</div></div>
+          <div><div class="field-label">Possible implications</div><div class="field-value">${f.impact}</div></div>
+          <div><div class="field-label">Suggested action</div><div class="field-value">${f.recommendation}</div></div>
+          <div><div class="field-label">Reference</div><div class="field-value">${f.legislation}</div></div>
+        </div>
+        <div class="finding-foot">
+          <div class="finding-meta">
+            <span>Est. exposure: <b>${f.exposure ? fmtUGX(f.exposure) : "—"}</b></span>
+            <span>Confidence: <b>${f.confidence}%</b></span>
+          </div>
+          <div class="finding-actions">
+            <button class="action-btn action-resolve" data-resolve="${f.id}" ${f.status !== "open" ? "disabled" : ""}>Resolve</button>
+            <button class="action-btn action-ignore" data-ignore="${f.id}" ${f.status !== "open" ? "disabled" : ""}>Ignore</button>
+            <button class="action-btn action-view">View Details</button>
+          </div>
+        </div>
+      </div>` : ""}
+    </div>`;
+  }).join("") : `<div class="empty-note">No findings match this filter.</div>`;
+
+  document.getElementById("content").innerHTML = `
+    <section class="card" style="margin-bottom:24px;">
+      <div class="exec-summary-head">
+        <div>
+          <div class="eyebrow">Executive Summary — Jul 2026 · TIN 1004829201</div>
+          <div class="status-row"><h2>Overall Status</h2>${stamp(label, tone)}</div>
+        </div>
+        <div class="meta-note">Reviewed 13 Jul 2026 · Confidence 96%</div>
+      </div>
+      <div class="summary-grid">
+        ${summaryCard("Critical Issues", critical, "var(--brick)")}
+        ${summaryCard("Warnings", warning, "var(--amber)")}
+        ${summaryCard("Checks Passed", 154, "var(--emerald)")}
+        ${summaryCard("Est. Risk Exposure", fmtUGX(totalExposure), "var(--navy)")}
+        ${summaryCard("Confidence", "96%")}
+      </div>
+      <p class="disclaimer">This review identifies possible inconsistencies based on the information provided. It does not constitute legal or tax advice, nor does it guarantee acceptance or rejection by URA.</p>
+    </section>
+
+    <section class="charts-row">
+      <div class="card chart-card">
+        <div class="chart-head"><h3>Revenue &amp; Output VAT Trend</h3><span>UGX millions</span></div>
+        <canvas id="revenueChart" height="90"></canvas>
+      </div>
+      <div class="card chart-card">
+        <h3>Findings by Severity</h3>
+        <canvas id="severityChart" height="130"></canvas>
+        <div class="legend" id="severityLegend"></div>
+      </div>
+    </section>
+
+    <div class="body-grid">
+      <div>
+        <div class="section-head">
+          <h3>AI Findings</h3>
+          <div class="filters">
+            <div class="search-box">${icon("search", 13)}<input id="findingSearch" placeholder="Search findings" value="${state.query}"/></div>
+            <select id="severitySelect">
+              <option value="all" ${state.severityFilter === "all" ? "selected" : ""}>All severities</option>
+              <option value="critical" ${state.severityFilter === "critical" ? "selected" : ""}>Critical</option>
+              <option value="warning" ${state.severityFilter === "warning" ? "selected" : ""}>Warning</option>
+              <option value="info" ${state.severityFilter === "info" ? "selected" : ""}>Info</option>
+            </select>
+          </div>
+        </div>
+        <div>${findingsHtml}</div>
+      </div>
+      <div>
+        <h3 style="font-family:var(--font-display);font-size:15px;font-weight:600;margin-bottom:12px;">Compliance Checklist</h3>
+        <div class="checklist-card">
+          ${CHECKLIST.map(c => {
+            const meta = c.status === "pass" ? { icon: "check", label: "Passed", color: "var(--emerald)" }
+              : c.status === "missing" ? { icon: "x", label: "Missing", color: "var(--brick)" }
+              : { icon: "triangle-alert", label: "Needs review", color: "var(--amber)" };
+            return `<div class="checklist-row"><span>${c.area}</span><span class="checklist-status" style="color:${meta.color}">${icon(meta.icon, 14)} ${meta.label}</span></div>`;
+          }).join("")}
+        </div>
+        <button class="generate-report-btn" id="generateReportBtn">${icon("file-bar-chart", 14)} Generate Report</button>
+      </div>
+    </div>
+  `;
+
+  attachDashboardListeners();
+  renderCharts();
+}
+
+function renderCharts() {
+  if (typeof Chart === "undefined") {
+    document.getElementById("revenueChart").outerHTML =
+      '<div style="padding:24px 0;text-align:center;font-size:12.5px;color:var(--ink-faint)">Chart.js failed to load from the CDN — check network access.</div>';
+    document.getElementById("severityChart").outerHTML =
+      '<div style="padding:24px 0;text-align:center;font-size:12.5px;color:var(--ink-faint)">Chart.js failed to load from the CDN.</div>';
+    return;
+  }
+
+  if (revenueChartInstance) revenueChartInstance.destroy();
+  if (severityChartInstance) severityChartInstance.destroy();
+  revenueChartInstance = null;
+  severityChartInstance = null;
+
+  const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  revenueChartInstance = new Chart(document.getElementById("revenueChart"), {
+    type: "line",
+    data: {
+      labels: REVENUE_TREND.map(d => d.period),
+      datasets: [
+        { label: "Revenue", data: REVENUE_TREND.map(d => d.revenue), borderColor: cssVar("--navy"), backgroundColor: "transparent", tension: .3, pointRadius: 3 },
+        { label: "Output VAT", data: REVENUE_TREND.map(d => d.vat), borderColor: cssVar("--emerald"), backgroundColor: "transparent", tension: .3, pointRadius: 3 },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "top", labels: { color: cssVar("--ink-soft"), font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: cssVar("--ink-faint"), font: { size: 11 } }, grid: { color: cssVar("--line") } },
+        y: { ticks: { color: cssVar("--ink-faint"), font: { size: 11 } }, grid: { color: cssVar("--line") } },
+      },
+    },
+  });
+
+  const openFindings = findings.filter(f => f.status === "open");
+  const breakdown = [
+    { name: "Critical", value: openFindings.filter(f => f.severity === "critical").length, color: cssVar("--brick") },
+    { name: "Warning", value: openFindings.filter(f => f.severity === "warning").length, color: cssVar("--amber") },
+    { name: "Info", value: openFindings.filter(f => f.severity === "info").length, color: cssVar("--navy") },
+  ].filter(d => d.value > 0);
+
+  const legend = document.getElementById("severityLegend");
+  if (breakdown.length === 0) {
+    document.getElementById("severityChart").style.display = "none";
+    legend.innerHTML = `<span style="color:var(--ink-faint)">No open findings.</span>`;
+    return;
+  }
+  document.getElementById("severityChart").style.display = "block";
+  severityChartInstance = new Chart(document.getElementById("severityChart"), {
+    type: "doughnut",
+    data: { labels: breakdown.map(d => d.name), datasets: [{ data: breakdown.map(d => d.value), backgroundColor: breakdown.map(d => d.color), borderWidth: 0 }] },
+    options: { responsive: true, cutout: "60%", plugins: { legend: { display: false } } },
+  });
+  legend.innerHTML = breakdown.map(d => `<span><span class="dot" style="background:${d.color}"></span>${d.name}</span>`).join("");
+}
+
+function attachDashboardListeners() {
+  document.querySelectorAll("[data-toggle]").forEach(el => el.addEventListener("click", () => {
+    const id = el.getAttribute("data-toggle");
+    state.expanded = state.expanded === id ? null : id;
+    renderDashboard();
+  }));
+  document.querySelectorAll("[data-resolve]").forEach(el => el.addEventListener("click", () => {
+    const f = findings.find(x => x.id === el.getAttribute("data-resolve"));
+    if (f) f.status = "resolved";
+    renderDashboard();
+  }));
+  document.querySelectorAll("[data-ignore]").forEach(el => el.addEventListener("click", () => {
+    const f = findings.find(x => x.id === el.getAttribute("data-ignore"));
+    if (f) f.status = "ignored";
+    renderDashboard();
+  }));
+  const searchEl = document.getElementById("findingSearch");
+  if (searchEl) {
+    searchEl.addEventListener("input", (e) => { state.query = e.target.value; renderDashboard(); searchEl.focus(); searchEl.selectionStart = searchEl.selectionEnd = searchEl.value.length; });
+  }
+  const selectEl = document.getElementById("severitySelect");
+  if (selectEl) selectEl.addEventListener("change", (e) => { state.severityFilter = e.target.value; renderDashboard(); });
+  const genBtn = document.getElementById("generateReportBtn");
+  if (genBtn) genBtn.addEventListener("click", () => { state.active = "reports"; render(); });
+}
+
+function renderReports() {
+  document.getElementById("content").innerHTML = `
+    <div class="report-intro">
+      <div class="placeholder-icon">${icon("file-bar-chart", 18)}</div>
+      <div><h2>Reports</h2><p>Kase Traders Ltd · Jun 2026</p></div>
+    </div>
+    <div class="report-grid">
+      ${REPORT_FORMATS.map(f => `
+        <div class="report-card">
+          <div class="report-card-icon">${icon(f.icon, 16)}</div>
+          <div>
+            <div class="report-card-title">${f.label}</div>
+            <div class="report-card-desc">${f.desc}</div>
+          </div>
+          <div class="report-card-dl">${icon("download", 13)} Download .${f.key}</div>
+        </div>
+      `).join("")}
+    </div>
+    <div class="report-note">
+      <h3>What's in every format</h3>
+      <p>Cover page with company &amp; TIN, a one-page management summary, detailed findings with reasoning and recommendations, a financial impact table, and the compliance checklist — generated fresh from the current findings each time, so all three formats always match.</p>
+    </div>
+  `;
+}
+
+function renderPlaceholder(key) {
+  const item = NAV_ITEMS.find(n => n.key === key) || NAV_ITEMS[0];
+  document.getElementById("content").innerHTML = `
+    <div class="placeholder">
+      <div class="placeholder-icon">${icon(item.icon, 20)}</div>
+      <h3>${item.label}</h3>
+      <p>Dedicated drill-down for this area is scoped for the next Phase 8 pass — its findings already surface on the Dashboard and in the Compliance Checklist.</p>
+    </div>
+  `;
+}
+
+function render() {
+  document.documentElement.classList.toggle("dark", state.dark);
+  document.getElementById("sidebar").classList.toggle("open", state.sidebarOpen);
+  document.getElementById("scrim").classList.toggle("show", state.sidebarOpen);
+  renderNav();
+  renderHeaderButtons();
+
+  if (state.active === "reports") renderReports();
+  else if (state.active === "dashboard" || state.active === "review") renderDashboard();
+  else renderPlaceholder(state.active);
+}
+
+/* ============================================================ Global listeners */
+document.getElementById("menuBtn").addEventListener("click", () => { state.sidebarOpen = true; render(); });
+document.getElementById("scrim").addEventListener("click", () => { state.sidebarOpen = false; render(); });
+document.getElementById("darkToggle").addEventListener("click", () => { state.dark = !state.dark; render(); });
+document.getElementById("downloadReportBtn").addEventListener("click", () => { state.active = "reports"; render(); });
+document.getElementById("nav").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-nav]");
+  if (!btn) return;
+  state.active = btn.getAttribute("data-nav");
+  state.sidebarOpen = false;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

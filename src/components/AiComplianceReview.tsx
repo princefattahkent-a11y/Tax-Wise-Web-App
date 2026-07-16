@@ -35,9 +35,13 @@ interface AiComplianceReviewProps {
     id: string;
     full_name?: string;
   };
+  /** Optional: called with findings array when a review completes successfully */
+  onReviewComplete?: (findings: any[]) => void;
+  /** Optional: pre-fill form fields (from an uploaded CSV/JSON return file) */
+  initialData?: Record<string, any>;
 }
 
-export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) => {
+export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user, onReviewComplete, initialData }) => {
   // Navigation / Active Scope
   const [companies, setCompanies] = useState<any[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
@@ -108,6 +112,35 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
     loadCompanies();
     setMounted(true);
   }, []);
+
+  // Apply initialData (from uploaded file) once it arrives
+  useEffect(() => {
+    if (!initialData || Object.keys(initialData).length === 0) return;
+    if (initialData.vat_declared_output !== undefined) setVatOutput(Number(initialData.vat_declared_output));
+    if (initialData.vat_declared_input !== undefined) setVatInput(Number(initialData.vat_declared_input));
+    if (initialData.efris_sales_total !== undefined) setEfrisSales(Number(initialData.efris_sales_total));
+    if (initialData.vat_input_invalid_tin !== undefined) setVatInvalidTin(Number(initialData.vat_input_invalid_tin));
+    if (initialData.payroll_register_count !== undefined) setPayrollCount(Number(initialData.payroll_register_count));
+    if (initialData.payroll_register_gross !== undefined) setPayrollGross(Number(initialData.payroll_register_gross));
+    if (initialData.paye_schedule_count !== undefined) setPayeCount(Number(initialData.paye_schedule_count));
+    if (initialData.paye_schedule_tax !== undefined) setPayeTax(Number(initialData.paye_schedule_tax));
+    if (initialData.financial_gross_margin !== undefined) {
+      // Accept both decimal (0.35) and percentage (35)
+      const raw = Number(initialData.financial_gross_margin);
+      setGrossMargin(raw > 1 ? raw : raw * 100);
+    }
+    if (initialData.financial_sales !== undefined) setFinancialSales(Number(initialData.financial_sales));
+    if (initialData.supplier_tins_total_count !== undefined) setSupplierTinsTotal(Number(initialData.supplier_tins_total_count));
+    if (initialData.supplier_tins_invalid_count !== undefined) setSupplierTinsInvalid(Number(initialData.supplier_tins_invalid_count));
+    if (initialData.nssf_contribution_total !== undefined) setNssfContribution(Number(initialData.nssf_contribution_total));
+    if (initialData.is_nil_return !== undefined) setIsNilReturn(Boolean(initialData.is_nil_return));
+    if (initialData.supporting_documents_present !== undefined) setDocsPresent(Boolean(initialData.supporting_documents_present));
+    if (initialData.duplicate_invoices_count !== undefined) setDuplicateInvoices(Number(initialData.duplicate_invoices_count));
+    if (initialData.negative_balances_present !== undefined) setNegativeBalances(Boolean(initialData.negative_balances_present));
+    // Reset any prior review result
+    setReviewResult(null);
+    setFindings([]);
+  }, [initialData]);
 
   // Map database period figures back to UI inputs
   const setFormFromRecord = (rec: any) => {
@@ -240,6 +273,8 @@ export const AiComplianceReview: React.FC<AiComplianceReviewProps> = ({ user }) 
       const res = await runComplianceReviewAction(selectedCompany.id, selectedPeriod, true);
       setReviewResult(res.review);
       setFindings(res.findings);
+      // Notify parent dashboard with the live findings
+      onReviewComplete?.(res.findings);
     } catch (err: any) {
       alert(`Review Failed: ${err.message}`);
     } finally {

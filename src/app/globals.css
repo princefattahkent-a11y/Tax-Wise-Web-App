@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 * {
   box-sizing: border-box;
@@ -29,6 +29,23 @@
   --color-prof-text: #0F2044;
   --color-prof-bg: #E8EDF5;
   --color-badge-bg: #E8EDF5;
+
+  /* ── Compliance page design tokens (matches taxwise-mockup_1.html) ── */
+  --cx-bg: #F3F5F1;
+  --cx-surface: #FFFFFF;
+  --cx-surface-sunken: #ECEFE9;
+  --cx-ink: #101E30;
+  --cx-ink-soft: #4C5C68;
+  --cx-ink-faint: #8B98A0;
+  --cx-line: #DADFD6;
+  --cx-emerald: #0E7C5A;
+  --cx-emerald-soft: #E4F1EA;
+  --cx-amber: #A96A0B;
+  --cx-amber-soft: #F6EBD8;
+  --cx-brick: #A23F2C;
+  --cx-brick-soft: #F5E4DF;
+  --cx-navy: #28466E;
+  --cx-navy-soft: #E6ECF3;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,6 +72,23 @@
     --color-prof-text: #F8FAFC;
     --color-prof-bg: rgba(51, 65, 85, 0.4);
     --color-badge-bg: rgba(51, 65, 85, 0.4);
+
+    /* ── Compliance page dark-mode overrides ── */
+    --cx-bg: #0A1420;
+    --cx-surface: #101E30;
+    --cx-surface-sunken: #0C1826;
+    --cx-ink: #E9EEF2;
+    --cx-ink-soft: #9DACB8;
+    --cx-ink-faint: #66757F;
+    --cx-line: #213345;
+    --cx-emerald: #3FBE8E;
+    --cx-emerald-soft: #123326;
+    --cx-amber: #D6A03F;
+    --cx-amber-soft: #332711;
+    --cx-brick: #DB7C64;
+    --cx-brick-soft: #331E17;
+    --cx-navy: #7FA6D6;
+    --cx-navy-soft: #152840;
   }
 }
 

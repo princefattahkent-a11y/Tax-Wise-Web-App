@@ -1,0 +1,19 @@
+{
+  "vat_declared_output": 18000000,
+  "vat_declared_input": 8000000,
+  "efris_sales_total": 100000000,
+  "vat_input_invalid_tin": 0,
+  "payroll_register_count": 15,
+  "payroll_register_gross": 30000000,
+  "paye_schedule_count": 15,
+  "paye_schedule_tax": 4500000,
+  "financial_gross_margin": 0.35,
+  "financial_sales": 100000000,
+  "supplier_tins_total_count": 12,
+  "supplier_tins_invalid_count": 0,
+  "nssf_contribution_total": 4500000,
+  "is_nil_return": false,
+  "supporting_documents_present": true,
+  "duplicate_invoices_count": 0,
+  "negative_balances_present": false
+}

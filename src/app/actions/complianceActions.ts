@@ -603,3 +603,195 @@ export async function updateFindingStatusAction(
     };
   }
 }
+
+// ==========================================
+// 5. Compliance History Action
+// ==========================================
+
+export interface ComplianceHistoryRecord {
+  id: string;
+  company_id: string;
+  company_name?: string;
+  period: string;
+  status: string;
+  estimated_exposure: number;
+  confidence: number;
+  ai_summary?: string;
+  reviewed_at: string;
+  findings?: Array<{
+    id: string;
+    code: string;
+    severity: string;
+    area: string;
+    title: string;
+    description: string;
+    reason: string;
+    impact: string;
+    recommendation: string;
+    legislation_ref?: string;
+    exposure: number;
+    confidence: number;
+    status: string;
+  }>;
+}
+
+export async function getComplianceHistoryAction(
+  companyId?: string
+): Promise<ComplianceHistoryRecord[]> {
+  const user = await getServerUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    // Return rich mock history in sandbox mode
+    return [
+      {
+        id: "hist-001",
+        company_id: "c17bf7ee-3382-4467-88e3-ea6222bde971",
+        company_name: "Uganda Premium Trade Ltd",
+        period: "2026-07",
+        status: "high_risk",
+        estimated_exposure: 3090000,
+        confidence: 91,
+        ai_summary: "Two critical findings identified: VAT reconciliation gap against EFRIS and missing employees from PAYE schedule. Immediate action required before filing.",
+        reviewed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        findings: [
+          {
+            id: "h1-f1", code: "XVAL-003", severity: "critical", area: "VAT",
+            title: "Output VAT does not reconcile with EFRIS sales",
+            description: "Declared output VAT of UGX 18,240,000 is 11.4% lower than EFRIS-implied VAT.",
+            reason: "EFRIS receipts imply output VAT of UGX 38,628,000; return declares UGX 101,333,000 taxable base.",
+            impact: "possible inconsistency detected: this may require further review",
+            recommendation: "Reconcile EFRIS sales export against VAT working schedule line by line.",
+            legislation_ref: "VAT Act Cap 349, s.16 & s.30",
+            exposure: 2450000, confidence: 96, status: "open"
+          },
+          {
+            id: "h1-f2", code: "PAYE-002", severity: "critical", area: "PAYE",
+            title: "Two employees missing from PAYE schedule",
+            description: "Payroll register lists 47 active employees; PAYE schedule reflects 45.",
+            reason: "Employee IDs 0038 and 0041 appear in payroll with gross pay above PAYE threshold but absent from computation schedule.",
+            impact: "this appears unusual and should be verified before filing",
+            recommendation: "Confirm whether employees 0038 and 0041 were engaged mid-period or excluded in error.",
+            legislation_ref: "Income Tax Act Cap 340, s.116",
+            exposure: 640000, confidence: 91, status: "open"
+          }
+        ]
+      },
+      {
+        id: "hist-002",
+        company_id: "c17bf7ee-3382-4467-88e3-ea6222bde971",
+        company_name: "Uganda Premium Trade Ltd",
+        period: "2026-06",
+        status: "review_required",
+        estimated_exposure: 1120000,
+        confidence: 84,
+        ai_summary: "One warning-level finding: input VAT claim on a supplier with no TIN on file. Obtain and record the TIN before filing.",
+        reviewed_at: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString(),
+        findings: [
+          {
+            id: "h2-f1", code: "VAT-001", severity: "warning", area: "VAT",
+            title: "Input VAT claim on a supplier with no TIN on file",
+            description: "An input VAT claim of UGX 1,120,000 references supplier invoice INV-2291 with no TIN recorded.",
+            reason: "Supplier record 'Kase Hardware Ltd' has a blank TIN field.",
+            impact: "possible inconsistency detected",
+            recommendation: "Obtain and record the supplier's TIN, or exclude the claim.",
+            legislation_ref: "VAT Act Cap 349, s.28",
+            exposure: 1120000, confidence: 84, status: "resolved"
+          }
+        ]
+      },
+      {
+        id: "hist-003",
+        company_id: "c17bf7ee-3382-4467-88e3-ea6222bde971",
+        company_name: "Uganda Premium Trade Ltd",
+        period: "2026-05",
+        status: "ready",
+        estimated_exposure: 0,
+        confidence: 98,
+        ai_summary: "All compliance checks passed for May 2026. No outstanding findings. Return is ready to file.",
+        reviewed_at: new Date(Date.now() - 62 * 24 * 60 * 60 * 1000).toISOString(),
+        findings: []
+      },
+      {
+        id: "hist-004",
+        company_id: "c17bf7ee-3382-4467-88e3-ea6222bde971",
+        company_name: "Uganda Premium Trade Ltd",
+        period: "2026-04",
+        status: "review_required",
+        estimated_exposure: 870000,
+        confidence: 79,
+        ai_summary: "Gross profit margin diverged from prior periods. Cost of sales grew 29% while revenue was flat. A note should be added to financial statements.",
+        reviewed_at: new Date(Date.now() - 93 * 24 * 60 * 60 * 1000).toISOString(),
+        findings: [
+          {
+            id: "h4-f1", code: "ITX-001", severity: "warning", area: "Income Tax",
+            title: "Gross profit margin diverges from prior periods",
+            description: "Gross margin for the period is 22.1%, against a trailing three-period average of 31.4%.",
+            reason: "Cost of sales grew 29% period-on-period while revenue grew 2%, without a note in the financial statements.",
+            impact: "this may require further review",
+            recommendation: "Add a note to the financial statements explaining the cost movement.",
+            legislation_ref: "Income Tax Act Cap 340, s.15",
+            exposure: 870000, confidence: 79, status: "resolved"
+          }
+        ]
+      }
+    ];
+  }
+
+  try {
+    let query = admin
+      .from("compliance_reviews")
+      .select("*, companies(name)")
+      .order("reviewed_at", { ascending: false })
+      .limit(20);
+
+    if (companyId) {
+      query = query.eq("company_id", companyId);
+    } else {
+      // Filter to companies the current user belongs to
+      const { data: members } = await admin
+        .from("company_members")
+        .select("company_id")
+        .eq("user_id", user.id);
+      if (members && members.length > 0) {
+        query = query.in("company_id", members.map((m: any) => m.company_id));
+      }
+    }
+
+    const { data: reviews, error } = await query;
+    if (error || !reviews) {
+      console.log("[getComplianceHistoryAction] DB error, returning sandbox history.");
+      return [];
+    }
+
+    // Fetch findings for each review
+    const enriched = await Promise.all(
+      reviews.map(async (rev: any) => {
+        const { data: findings } = await admin
+          .from("findings")
+          .select("*")
+          .eq("review_id", rev.id)
+          .order("severity", { ascending: true });
+
+        return {
+          id: rev.id,
+          company_id: rev.company_id,
+          company_name: rev.companies?.name,
+          period: rev.period,
+          status: rev.status,
+          estimated_exposure: rev.estimated_exposure,
+          confidence: rev.confidence,
+          ai_summary: rev.ai_summary,
+          reviewed_at: rev.reviewed_at,
+          findings: findings || []
+        } as ComplianceHistoryRecord;
+      })
+    );
+
+    return enriched;
+  } catch (err) {
+    console.log("[getComplianceHistoryAction] exception, returning empty history.");
+    return [];
+  }
+}
