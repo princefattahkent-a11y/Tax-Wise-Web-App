@@ -171,7 +171,18 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        throw new Error(data.error || "Failed to receive response.");
+        const errorMsg = data?.error || "Failed to receive response from AI assistant service.";
+        setMessages(prev => [
+          ...prev,
+          {
+            id: generateMessageId(),
+            sender: "ai",
+            text: `⚠️ **API Error:** ${errorMsg}\n\nPlease check your configuration. If you are running locally, ensure your \`GEMINI_API_KEY\` in your \`.env\` file is set to a valid key from Google AI Studio.`,
+            timestamp: new Date()
+          }
+        ]);
+        setIsLoading(false);
+        return;
       }
 
       setMessages(prev => [
@@ -285,10 +296,8 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
             width: 58,
             height: 58,
             borderRadius: "50%",
-            background: isOpen 
-              ? `linear-gradient(135deg, ${C.navy} 0%, ${C.navyLight} 100%)`
-              : `linear-gradient(135deg, ${C.teal} 0%, ${C.tealDark} 100%)`,
-            color: C.white,
+            background: isOpen ? "#0F2044" : C.teal,
+            color: isOpen ? "#FFFFFF" : C.white,
             border: `2px solid ${isOpen ? "rgba(255,255,255,0.15)" : C.white}`,
             display: "flex",
             alignItems: "center",
@@ -296,7 +305,8 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
             cursor: "pointer",
             boxShadow: "0 8px 32px rgba(15, 32, 68, 0.16)",
             position: "relative",
-            outline: "none"
+            outline: "none",
+            transition: "background-color 0.2s ease, transform 0.2s ease"
           }}
         >
           <AnimatePresence mode="wait">
@@ -383,12 +393,12 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
             <div 
               style={{ 
                 padding: "16px 20px", 
-                background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyLight} 100%)`,
-                color: C.white,
+                background: "#0F2044",
+                color: "#FFFFFF",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "1.5px solid rgba(255,255,255,0.08)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -529,7 +539,7 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
                       style={{
                         padding: m.sender === "user" ? "10px 14px" : "12px 16px",
                         borderRadius: m.sender === "user" ? "16px 16px 4px 16px" : "4px 16px 16px 16px",
-                        background: m.sender === "user" ? `linear-gradient(135deg, ${C.teal} 0%, ${C.tealDark} 100%)` : C.white,
+                        background: m.sender === "user" ? C.teal : C.white,
                         color: m.sender === "user" ? C.white : C.text,
                         boxShadow: "0 2px 8px rgba(15, 32, 68, 0.02)",
                         border: m.sender === "user" ? "none" : `1px solid ${C.border}`,
@@ -645,12 +655,12 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
                       disabled={isLoading}
                       style={{
                         padding: "6px 14px",
-                        background: C.navy,
-                        border: "none",
+                        background: C.tealLight,
+                        border: `1.5px solid ${C.border}`,
                         borderRadius: 9999,
                         fontSize: "0.78rem",
-                        color: C.white,
-                        fontWeight: 500,
+                        color: C.teal,
+                        fontWeight: 600,
                         cursor: isLoading ? "not-allowed" : "pointer",
                         transition: "all 0.15s ease",
                         display: "flex",
@@ -661,12 +671,16 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
                       }}
                       onMouseOver={(e) => {
                         if (!isLoading) {
-                          e.currentTarget.style.background = C.navyLight;
+                          e.currentTarget.style.background = C.teal;
+                          e.currentTarget.style.color = C.white;
+                          e.currentTarget.style.borderColor = C.teal;
                         }
                       }}
                       onMouseOut={(e) => {
                         if (!isLoading) {
-                          e.currentTarget.style.background = C.navy;
+                          e.currentTarget.style.background = C.tealLight;
+                          e.currentTarget.style.color = C.teal;
+                          e.currentTarget.style.borderColor = C.border;
                         }
                       }}
                     >
@@ -690,9 +704,9 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
                     width: 26,
                     height: 26,
                     borderRadius: "50%",
-                    background: C.navy,
-                    color: C.white,
-                    border: "none",
+                    background: C.white,
+                    color: C.text,
+                    border: `1.5px solid ${C.border}`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -701,10 +715,10 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
                     transition: "all 0.15s ease"
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.background = C.navyLight;
+                    e.currentTarget.style.background = C.offwhite;
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.background = C.navy;
+                    e.currentTarget.style.background = C.white;
                   }}
                   title="Scroll right"
                 >
@@ -761,8 +775,14 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
                     background: C.offwhite,
                     transition: "all 0.2s ease"
                   }}
-                  onFocus={(e) => e.target.style.borderColor = C.teal}
-                  onBlur={(e) => e.target.style.borderColor = C.border}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = C.teal;
+                    e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}`;
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = C.border;
+                    e.target.style.boxShadow = "none";
+                  }}
                 />
                 <button
                   type="submit"
@@ -772,15 +792,16 @@ export const AiFAB: React.FC<AiFABProps> = ({ currentPage, dbUser }) => {
                     height: 38,
                     borderRadius: 10,
                     background: !inputVal.trim() || isLoading 
-                      ? "#E5E7EB" 
-                      : `linear-gradient(135deg, ${C.teal} 0%, ${C.tealDark} 100%)`,
-                    color: C.white,
+                      ? "var(--color-badge-bg)" 
+                      : C.teal,
+                    color: !inputVal.trim() || isLoading ? "var(--color-muted)" : C.white,
                     border: "none",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: !inputVal.trim() || isLoading ? "not-allowed" : "pointer",
-                    boxShadow: !inputVal.trim() || isLoading ? "none" : "0 4px 10px rgba(26,123,107,0.25)"
+                    boxShadow: !inputVal.trim() || isLoading ? "none" : "0 4px 12px rgba(26, 123, 107, 0.2)",
+                    transition: "all 0.2s ease"
                   }}
                 >
                   <Send size={15} />

@@ -19,6 +19,77 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing query parameter" }, { status: 400 });
     }
 
+    // Check if the API key is missing or is the default placeholder
+    const apiKey = process.env.GEMINI_API_KEY;
+    const isMockMode = !apiKey || apiKey === "your-gemini-api-key" || apiKey.trim() === "";
+
+    if (isMockMode) {
+      let mockAnswer = "";
+      let mockSuggestions: string[] = [];
+
+      const queryLower = query.toLowerCase();
+      if (queryLower.includes("efris") || queryLower.includes("fiscal")) {
+        mockAnswer = `### URA eFRIS System Guidelines
+The **Electronic Fiscal Receipting and Invoicing Solution (eFRIS)** is mandatory for all businesses registered for VAT in Uganda.
+
+**Key Compliance Rules:**
+- **Invoices:** All transactions must be fiscalized with a URA-generated QR code.
+- **Penalties:** Failure to issue a fiscal receipt carries a standard penalty of **4,000,000 UGX** (or more depending on the tax value).
+- **Offline Mode:** If your internet or device fails, you must record sales manually and transmit them within 24 hours of connection recovery.`;
+        mockSuggestions = [
+          "How do I apply for an eFRIS waiver?",
+          "What is the penalty for using a non-approved device?",
+          "How to reconcile sales with URA monthly report?"
+        ];
+      } else if (queryLower.includes("vat") || queryLower.includes("value added")) {
+        mockAnswer = `### Uganda VAT Regulations
+Value Added Tax (VAT) is standard-rated at **18%** in Uganda on taxable supplies.
+
+**Important Details:**
+- **Registration Threshold:** Annual turnover of **150,000,000 UGX** makes VAT registration compulsory.
+- **Filing Deadline:** Returns must be filed and paid by the **15th day of the following month**.
+- **Input VAT:** Ensure all claims are backed by official eFRIS fiscal invoices. Non-fiscalized receipts are generally disallowed.`;
+        mockSuggestions = [
+          "What items are zero-rated or exempt from VAT?",
+          "How do I claim input VAT on imported services?",
+          "What is the process for VAT refunds?"
+        ];
+      } else if (queryLower.includes("paye") || queryLower.includes("income tax") || queryLower.includes("salary")) {
+        mockAnswer = `### PAYE & Employment Taxes
+Pay-As-You-Earn (PAYE) is a progressive tax deducted from employee salaries monthly in Uganda.
+
+**Current Rates:**
+- Monthly income up to **235,000 UGX**: 0%
+- Income between **235,000 - 335,000 UGX**: 10%
+- Income between **335,000 - 410,000 UGX**: 20% + 10,000 UGX
+- Income above **410,000 UGX**: 30% + 25,000 UGX
+- **Super Tax:** An additional **10%** surcharge applies on monthly income exceeding **10,000,000 UGX**.`;
+        mockSuggestions = [
+          "How is NSSF calculated and split?",
+          "What benefits-in-kind are taxable under PAYE?",
+          "How do I file the monthly PAYE return?"
+        ];
+      } else {
+        mockAnswer = `### Hello from TaxWise Assistant!
+I am currently operating in **Local Mock Mode** because a valid \`GEMINI_API_KEY\` was not detected in your local \`.env\` configuration.
+
+However, I can still answer questions about the **${currentPage || "Dashboard"}** section or general Ugandan tax policies.
+
+To enable full AI capabilities, please add a valid Gemini API Key from Google AI Studio to your local \`.env\` file.`;
+        mockSuggestions = [
+          "Tell me about eFRIS compliance penalties.",
+          "What are the standard VAT rules in Uganda?",
+          "How is PAYE calculated for local employees?"
+        ];
+      }
+
+      return NextResponse.json({
+        success: true,
+        answer: mockAnswer,
+        suggestedQuestions: mockSuggestions
+      });
+    }
+
     // Construct a rich system instruction summarizing full platform context and Uganda tax regulations
     const systemInstruction = `You are the friendly, professional, and authoritative AI Assistant for the TaxWise Uganda platform.
 Your purpose is to assist users (tax consultants, accountants, lawyers, business owners, and students in Uganda) by providing high-quality tax insights, explaining platform features, and helping them navigate.
@@ -160,6 +231,31 @@ Rules for your response:
     });
   } catch (error: unknown) {
     console.error("AI Assistant API Error:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const isApiKeyError = errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID") || errMsg.includes("key is invalid") || errMsg.includes("API key");
+
+    if (isApiKeyError) {
+      return NextResponse.json({
+        success: true,
+        answer: `### ⚠️ Invalid API Key Configured
+The Gemini API key configured in your local \`.env\` file is invalid or has expired.
+
+**How to Fix This:**
+1. Generate a free API key at [Google AI Studio](https://aistudio.google.com/).
+2. Open the \`.env\` file in your project root.
+3. Update the \`GEMINI_API_KEY\` variable with your new key:
+   \`\`\`bash
+   GEMINI_API_KEY=your_actual_api_key_here
+   \`\`\`
+4. Restart your local server (\`npm run dev\`).`,
+        suggestedQuestions: [
+          "Tell me about eFRIS compliance penalties.",
+          "What are the standard VAT rules in Uganda?",
+          "How is PAYE calculated for local employees?"
+        ]
+      });
+    }
+
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to communicate with AI Assistant service.",

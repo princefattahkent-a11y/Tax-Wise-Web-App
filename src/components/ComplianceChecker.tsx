@@ -693,6 +693,7 @@ interface UploadedFile {
   id: string;
   file: File;
   status: UploadFileStatus;
+  progress?: number;
   error?: string;
   data?: Record<string, any>;
 }
@@ -954,8 +955,7 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
       legislation: f.legislation_ref,
     }));
     setFindings(mapped);
-    setShowDataEntry(false);
-    setUploadedData(null);
+    // Don't close the modal automatically so the user can inspect mistakes/errors directly inside the modal first.
     showToast("Compliance review complete. Findings updated.", "success");
   };
 
@@ -981,6 +981,7 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
       id: `${f.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       file: f,
       status: "queued" as UploadFileStatus,
+      progress: 0,
     }));
 
     // Validate extensions
@@ -1000,10 +1001,17 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
     setShowUploadQueue(true);
     setUploadError("");
 
-    // Process each file sequentially
+    // Process each file sequentially with simulated progress
     let lastData: Record<string, any> | null = null;
     for (const entry of newEntries) {
-      setUploadQueue((prev) => prev.map((qe) => qe.id === entry.id ? { ...qe, status: "processing" } : qe));
+      setUploadQueue((prev) => prev.map((qe) => qe.id === entry.id ? { ...qe, status: "processing", progress: 0 } : qe));
+
+      // Simulate progress increments from 0% to 100%
+      for (let p = 0; p <= 100; p += 20) {
+        setUploadQueue((prev) => prev.map((qe) => qe.id === entry.id ? { ...qe, progress: p } : qe));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      }
+
       const result = await parseTaxReturnFile(entry.file);
       if (!result.ok) {
         setUploadQueue((prev) => prev.map((qe) => qe.id === entry.id ? { ...qe, status: "error", error: result.error } : qe));
@@ -1016,6 +1024,9 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
     if (lastData) {
       setUploadedData(lastData);
       showToast(`${newEntries.length} file(s) processed. Opening review form…`, "success");
+      // Wait a short moment so the user can see the "Done" state before the modal pops open.
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      setShowUploadQueue(false);
       setShowDataEntry(true);
     } else {
       showToast("All files failed to parse. Please check formats and try again.", "error");
@@ -1241,24 +1252,36 @@ export const ComplianceChecker: React.FC<ComplianceCheckerProps> = ({ user }) =>
                     : { bg: "var(--cx-surface-sunken)", color: "var(--cx-ink-faint)", label: "Queued", icon: <Clock size={12} /> };
                   return (
                     <div key={uf.id} style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "7px 10px", borderRadius: 7,
+                      display: "flex", flexDirection: "column", gap: uf.status === "processing" ? 8 : 0,
+                      padding: "10px 12px", borderRadius: 8,
                       background: "var(--cx-surface-sunken)", border: "1px solid var(--cx-line)",
                     }}>
-                      {getFileIcon(uf.file.name)}
-                      <span style={{ fontSize: 12.5, color: "var(--cx-ink)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{uf.file.name}</span>
-                      <span style={{ fontSize: 11, color: "var(--cx-ink-faint)", flexShrink: 0 }}>
-                        {(uf.file.size / 1024).toFixed(0)} KB
-                      </span>
-                      <span style={{
-                        display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px",
-                        borderRadius: 20, fontSize: 11, fontWeight: 600,
-                        background: statusStyle.bg, color: statusStyle.color,
-                      }}>
-                        {statusStyle.icon} {statusStyle.label}
-                      </span>
-                      {uf.status === "error" && uf.error && (
-                        <span style={{ fontSize: 11, color: "var(--cx-brick)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={uf.error}>{uf.error}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        {getFileIcon(uf.file.name)}
+                        <span style={{ fontSize: 12.5, color: "var(--cx-ink)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{uf.file.name}</span>
+                        <span style={{ fontSize: 11, color: "var(--cx-ink-faint)", flexShrink: 0 }}>
+                          {(uf.file.size / 1024).toFixed(0)} KB
+                        </span>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px",
+                          borderRadius: 20, fontSize: 11, fontWeight: 600,
+                          background: statusStyle.bg, color: statusStyle.color,
+                        }}>
+                          {statusStyle.icon} {statusStyle.label} {uf.status === "processing" && uf.progress !== undefined && `(${uf.progress}%)`}
+                        </span>
+                        {uf.status === "error" && uf.error && (
+                          <span style={{ fontSize: 11, color: "var(--cx-brick)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={uf.error}>{uf.error}</span>
+                        )}
+                      </div>
+                      {uf.status === "processing" && uf.progress !== undefined && (
+                        <div style={{ width: "100%", height: 5, background: "rgba(0,0,0,0.06)", borderRadius: 3, overflow: "hidden" }}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${uf.progress}%` }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            style={{ height: "100%", background: "var(--cx-navy)", borderRadius: 3 }}
+                          />
+                        </div>
                       )}
                     </div>
                   );
